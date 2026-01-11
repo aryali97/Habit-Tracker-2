@@ -21,6 +21,9 @@ iOS 26+ habit tracking app with streak visualization and customizable goals.
 - Use `describe_ui` to inspect UI hierarchy
 - Verification must include relevant UI automation via XcodeBuildMCP (tap, scroll, type, etc.), not just build + screenshot
 - If UI state looks stale, clean the build and reboot/erase the simulator before re-verifying
+- Prefer installing the app from `./DerivedData/Build/Products/Debug-iphonesimulator/Habit-Tracker-2.app` to avoid stale builds from the default DerivedData path
+- If simulator visuals don’t match device, reinstall using the `./DerivedData` app path and re-run UI automation before concluding
+- For verification runs, always `clean` then `build_sim` with `derivedDataPath ./DerivedData`, then reinstall from the `./DerivedData` app path to ensure a fresh build is being exercised
 
 ## Product Requirements
 
