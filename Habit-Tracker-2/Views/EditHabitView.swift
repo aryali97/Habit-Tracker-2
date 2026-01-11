@@ -133,6 +133,9 @@ struct EditHabitView: View {
                             }
                             .pickerStyle(.menu)
                             .tint(.white)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.8)
+                            .frame(minWidth: 48)
 
                             Spacer()
 
