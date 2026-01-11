@@ -19,6 +19,8 @@ iOS 26+ habit tracking app with streak visualization and customizable goals.
 - Use `test_sim` to run tests
 - Use `screenshot` to capture simulator screenshots for verification
 - Use `describe_ui` to inspect UI hierarchy
+- Verification must include relevant UI automation via XcodeBuildMCP (tap, scroll, type, etc.), not just build + screenshot
+- If UI state looks stale, clean the build and reboot/erase the simulator before re-verifying
 
 ## Product Requirements
 
