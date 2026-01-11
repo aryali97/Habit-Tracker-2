@@ -10,6 +10,7 @@ struct HabitCardView: View {
     let habit: Habit
     var onEdit: (() -> Void)? = nil
     var onDelete: (() -> Void)? = nil
+    @GestureState private var isHeaderPressed = false
 
     private var habitColor: Color {
         Color(hex: habit.color)
@@ -40,6 +41,14 @@ struct HabitCardView: View {
                     Haptics.impact(.light)
                     onEdit?()
                 }
+                .scaleEffect(isHeaderPressed ? 0.98 : 1)
+                .animation(.easeOut(duration: 0.12), value: isHeaderPressed)
+                .simultaneousGesture(
+                    DragGesture(minimumDistance: 0)
+                        .updating($isHeaderPressed) { _, state, _ in
+                            state = true
+                        }
+                )
                 .contextMenu {
                     if let onEdit = onEdit {
                         Button {
@@ -107,6 +116,7 @@ struct CompletionButtonView: View {
                 Button(action: toggleCompletion) {
                     Image(systemName: "checkmark")
                         .font(.system(size: 16, weight: .bold))
+                        .symbolEffect(.bounce, options: .speed(2.8), value: isCompletedToday)
                         .foregroundStyle(isCompletedToday ? .white : habitColor)
                         .frame(width: 44, height: 44)
                         .background(isCompletedToday ? habitColor : .clear)
@@ -125,29 +135,40 @@ struct CompletionButtonView: View {
                             y: 6
                         )
                 }
-                .buttonStyle(.plain)
-            } else if isCompletedToday {
-                // Show checkmark when multi-completion habit is fully complete
-                Button(action: resetCompletion) {
-                    Image(systemName: "checkmark")
-                        .font(.system(size: 16, weight: .bold))
-                        .foregroundStyle(.white)
-                        .frame(width: 44, height: 44)
-                        .background(habitColor)
-                        .clipShape(Circle())
-                        .shadow(color: habitColor.opacity(0.45), radius: 10, x: 0, y: 6)
-                }
-                .buttonStyle(.plain)
+                .buttonStyle(PressScaleButtonStyle())
+                .transition(.scale.combined(with: .opacity))
+                .animation(.snappy, value: isCompletedToday)
             } else {
-                // Progress ring for multi-completion habits (not yet complete)
-                SegmentedProgressButton(
-                    count: todayCount,
-                    goal: habit.completionsPerDay,
-                    color: habitColor,
-                    isComplete: isCompletedToday,
-                    onTap: incrementCompletion,
-                    onLongPress: { showingPicker = true }
-                )
+                // Progress ring and completion checkmark for multi-completion habits
+                ZStack {
+                    SegmentedProgressButton(
+                        count: todayCount,
+                        goal: habit.completionsPerDay,
+                        color: habitColor,
+                        isComplete: isCompletedToday,
+                        onTap: incrementCompletion,
+                        onLongPress: { showingPicker = true }
+                    )
+                    .opacity(isCompletedToday ? 0 : 1)
+                    .scaleEffect(isCompletedToday ? 0.9 : 1)
+                    .allowsHitTesting(!isCompletedToday)
+
+                    Button(action: resetCompletion) {
+                        Image(systemName: "checkmark")
+                            .font(.system(size: 16, weight: .bold))
+                            .symbolEffect(.bounce, options: .speed(2.8), value: isCompletedToday)
+                            .foregroundStyle(.white)
+                            .frame(width: 44, height: 44)
+                            .background(habitColor)
+                            .clipShape(Circle())
+                            .shadow(color: habitColor.opacity(0.45), radius: 10, x: 0, y: 6)
+                    }
+                    .buttonStyle(PressScaleButtonStyle())
+                    .opacity(isCompletedToday ? 1 : 0)
+                    .scaleEffect(isCompletedToday ? 1 : 0.9)
+                    .allowsHitTesting(isCompletedToday)
+                }
+                .animation(.interpolatingSpring(stiffness: 260, damping: 22), value: isCompletedToday)
                 .sheet(isPresented: $showingPicker) {
                     CompletionPickerSheet(
                         habit: habit,
@@ -160,6 +181,7 @@ struct CompletionButtonView: View {
                 }
             }
         }
+        .animation(.snappy, value: isCompletedToday)
     }
 
     private func toggleCompletion() {
@@ -241,6 +263,7 @@ struct SegmentedProgressButton: View {
     let isComplete: Bool
     let onTap: () -> Void
     let onLongPress: () -> Void
+    @GestureState private var isPressed = false
 
     private let size: CGFloat = 44
     private let lineWidth: CGFloat = 3
@@ -263,7 +286,7 @@ struct SegmentedProgressButton: View {
             // Plus icon
             Image(systemName: "plus")
                 .font(.system(size: 14, weight: .bold))
-                .foregroundStyle(.white)
+                .foregroundStyle(color)
         }
         .frame(width: size, height: size)
         .contentShape(Circle())
@@ -274,6 +297,15 @@ struct SegmentedProgressButton: View {
             Haptics.impact(.medium)
             onLongPress()
         }
+        .simultaneousGesture(
+            DragGesture(minimumDistance: 0)
+                .updating($isPressed) { _, state, _ in
+                    state = true
+                }
+        )
+        .scaleEffect(isPressed ? 0.96 : 1)
+        .animation(.easeOut(duration: 0.12), value: isPressed)
+        .animation(.interpolatingSpring(stiffness: 240, damping: 24), value: count)
     }
 
     private func segmentArc(index: Int, filled: Bool) -> Path {

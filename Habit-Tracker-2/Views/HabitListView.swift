@@ -60,10 +60,12 @@ struct HabitListView: View {
                                 onEdit: { habitToEdit = habit },
                                 onDelete: { deleteHabit(habit) }
                             )
+                            .transition(.move(edge: .top).combined(with: .opacity))
                         }
                     }
                     .padding(.horizontal)
                     .padding(.bottom)
+                    .animation(.snappy, value: habits.map(\.id))
                 }
             }
             .background(AppColors.background)
@@ -80,7 +82,9 @@ struct HabitListView: View {
 
     private func deleteHabit(_ habit: Habit) {
         Haptics.impact(.rigid)
-        modelContext.delete(habit)
+        withAnimation(.snappy) {
+            modelContext.delete(habit)
+        }
     }
 }
 

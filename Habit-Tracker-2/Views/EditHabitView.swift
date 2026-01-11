@@ -25,6 +25,8 @@ struct EditHabitView: View {
 
     // Icon picker state
     @State private var showIconPicker = false
+    @State private var formVisible = false
+    @State private var iconPulse = false
 
     private var isFormValid: Bool {
         !name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
@@ -47,6 +49,9 @@ struct EditHabitView: View {
                         Haptics.selection()
                         showIconPicker = true
                     }
+                    .scaleEffect(iconPulse ? 1.06 : 1)
+                    .shadow(color: iconPulse ? Color(hex: selectedColor).opacity(0.35) : .clear, radius: 10, x: 0, y: 6)
+                    .animation(.snappy, value: iconPulse)
 
                     // Name field
                     VStack(alignment: .leading, spacing: 8) {
@@ -94,6 +99,8 @@ struct EditHabitView: View {
                                 .font(.title2)
                                 .fontWeight(.semibold)
                                 .frame(minWidth: 40)
+                                .contentTransition(.numericText())
+                                .animation(.snappy, value: completionsPerDay)
 
                             Text("/ Day")
                                 .foregroundStyle(.secondary)
@@ -123,6 +130,8 @@ struct EditHabitView: View {
                                 .font(.title2)
                                 .fontWeight(.semibold)
                                 .frame(minWidth: 40)
+                                .contentTransition(.numericText())
+                                .animation(.snappy, value: streakGoalValue)
 
                             Text("/")
                                 .foregroundStyle(.secondary)
@@ -169,6 +178,9 @@ struct EditHabitView: View {
                     Spacer(minLength: 40)
                 }
                 .padding()
+                .opacity(formVisible ? 1 : 0)
+                .scaleEffect(formVisible ? 1 : 0.98)
+                .animation(.easeOut(duration: 0.22), value: formVisible)
             }
             .background(AppColors.background)
             .navigationTitle(isEditing ? "Edit Habit" : "New Habit")
@@ -206,22 +218,40 @@ struct EditHabitView: View {
         .preferredColorScheme(.dark)
         .onAppear {
             loadExistingHabit()
+            withAnimation(.easeOut(duration: 0.22)) {
+                formVisible = true
+            }
         }
-            .sheet(isPresented: $showIconPicker) {
-                IconPickerView(selectedIcon: $icon)
+        .onDisappear {
+            formVisible = false
+            iconPulse = false
+        }
+        .sheet(isPresented: $showIconPicker) {
+            IconPickerView(selectedIcon: $icon)
+        }
+        .onChange(of: icon) { _, _ in
+            Task { @MainActor in
+                withAnimation(.snappy) {
+                    iconPulse = true
+                }
+                try? await Task.sleep(nanoseconds: 180_000_000)
+                withAnimation(.easeOut(duration: 0.2)) {
+                    iconPulse = false
+                }
             }
-            .onChange(of: completionsPerDay) { _, _ in
-                Haptics.selection()
-            }
-            .onChange(of: streakGoalValue) { _, _ in
-                Haptics.selection()
-            }
-            .onChange(of: streakGoalPeriod) { _, _ in
-                Haptics.selection()
-            }
-            .onChange(of: streakGoalType) { _, _ in
-                Haptics.selection()
-            }
+        }
+        .onChange(of: completionsPerDay) { _, _ in
+            Haptics.selection()
+        }
+        .onChange(of: streakGoalValue) { _, _ in
+            Haptics.selection()
+        }
+        .onChange(of: streakGoalPeriod) { _, _ in
+            Haptics.selection()
+        }
+        .onChange(of: streakGoalType) { _, _ in
+            Haptics.selection()
+        }
     }
 
     private func loadExistingHabit() {
@@ -283,6 +313,7 @@ struct IconPickerButton: View {
                 .background(AppColors.cardBackground)
                 .clipShape(Circle())
         }
+        .buttonStyle(PressScaleButtonStyle())
     }
 }
 
@@ -324,6 +355,9 @@ struct ColorCircle: View {
                     .strokeBorder(Color.white, lineWidth: 3)
             }
         }
+        .scaleEffect(isSelected ? 1.06 : 1)
+        .shadow(color: isSelected ? Color.white.opacity(0.2) : .clear, radius: 6, x: 0, y: 4)
+        .animation(.snappy, value: isSelected)
     }
 }
 

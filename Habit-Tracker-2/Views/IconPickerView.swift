@@ -204,7 +204,10 @@ struct IconCell: View {
                     }
                 }
         }
-        .buttonStyle(.plain)
+        .scaleEffect(isSelected ? 1.06 : 1)
+        .shadow(color: isSelected ? Color.white.opacity(0.25) : .clear, radius: 8, x: 0, y: 5)
+        .animation(.snappy, value: isSelected)
+        .buttonStyle(PressScaleButtonStyle())
     }
 }
 
