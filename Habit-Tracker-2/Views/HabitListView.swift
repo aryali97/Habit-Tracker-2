@@ -14,30 +14,46 @@ struct HabitListView: View {
 
     var body: some View {
         NavigationStack {
-            ScrollView {
-                LazyVStack(spacing: 16) {
-                    ForEach(habits) { habit in
-                        HabitCardView(
-                            habit: habit,
-                            onEdit: { habitToEdit = habit },
-                            onDelete: { deleteHabit(habit) }
-                        )
-                    }
-                }
-                .padding()
-            }
-            .background(Color.black)
-            .navigationTitle("Habits")
-            .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
+            VStack(spacing: 0) {
+                // Custom header row
+                HStack {
+                    Text("Habits")
+                        .font(.system(size: 28, weight: .bold))
+                        .foregroundStyle(.white)
+
+                    Spacer()
+
                     Button {
                         showingAddHabit = true
                     } label: {
-                        Image(systemName: "plus.circle.fill")
-                            .font(.title2)
+                        Image(systemName: "plus")
+                            .font(.system(size: 16, weight: .semibold))
+                            .foregroundStyle(.white)
+                            .frame(width: 32, height: 32)
+                            .background(Color(white: 0.2))
+                            .clipShape(Circle())
                     }
                 }
+                .padding(.horizontal)
+                .padding(.top, 8)
+                .padding(.bottom, 16)
+
+                ScrollView {
+                    LazyVStack(spacing: 16) {
+                        ForEach(habits) { habit in
+                            HabitCardView(
+                                habit: habit,
+                                onEdit: { habitToEdit = habit },
+                                onDelete: { deleteHabit(habit) }
+                            )
+                        }
+                    }
+                    .padding(.horizontal)
+                    .padding(.bottom)
+                }
             }
+            .background(Color.black)
+            .navigationBarHidden(true)
             .sheet(isPresented: $showingAddHabit) {
                 EditHabitView()
             }

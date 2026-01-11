@@ -21,11 +21,11 @@ struct HabitCardView: View {
             HStack {
                 // Emoji and name section (tappable for edit, has context menu)
                 HStack {
-                    // Emoji with colored background
+                    // Emoji with colored background (inactive color)
                     Text(habit.emoji)
                         .font(.title2)
                         .frame(width: 44, height: 44)
-                        .background(habitColor.opacity(0.25))
+                        .background(habitColor.opacity(HabitOpacity.inactive))
                         .clipShape(RoundedRectangle(cornerRadius: 10))
 
                     Text(habit.name)
@@ -101,7 +101,7 @@ struct CompletionButtonView: View {
                         .font(.system(size: 16, weight: .bold))
                         .foregroundStyle(.white)
                         .frame(width: 44, height: 44)
-                        .background(isCompletedToday ? habitColor : habitColor.opacity(0.15))
+                        .background(isCompletedToday ? habitColor : habitColor.opacity(HabitOpacity.inactive))
                         .clipShape(RoundedRectangle(cornerRadius: 10))
                 }
                 .buttonStyle(.plain)
@@ -205,7 +205,7 @@ struct SegmentedProgressButton: View {
             // Background segments
             ForEach(0..<goal, id: \.self) { index in
                 segmentArc(index: index, filled: false)
-                    .stroke(color.opacity(0.25), lineWidth: lineWidth)
+                    .stroke(color.opacity(HabitOpacity.failed), lineWidth: lineWidth)
             }
 
             // Filled segments
@@ -217,7 +217,7 @@ struct SegmentedProgressButton: View {
             // Plus icon
             Image(systemName: "plus")
                 .font(.system(size: 14, weight: .bold))
-                .foregroundStyle(isComplete ? color : color.opacity(0.5))
+                .foregroundStyle(isComplete ? color : color.opacity(HabitOpacity.failed))
         }
         .frame(width: size, height: size)
         .contentShape(Circle())
@@ -280,7 +280,7 @@ struct CompletionPickerSheet: View {
                     Text(habit.emoji)
                         .font(.largeTitle)
                         .frame(width: 64, height: 64)
-                        .background(habitColor.opacity(0.2))
+                        .background(habitColor.opacity(HabitOpacity.inactive))
                         .clipShape(RoundedRectangle(cornerRadius: 14))
 
                     VStack(alignment: .leading) {
@@ -306,7 +306,7 @@ struct CompletionPickerSheet: View {
                             total: habit.completionsPerDay,
                             size: 180
                         )
-                        .stroke(habitColor.opacity(0.2), lineWidth: 8)
+                        .stroke(habitColor.opacity(HabitOpacity.failed), lineWidth: 8)
                     }
 
                     // Filled segments

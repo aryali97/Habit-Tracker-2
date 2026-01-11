@@ -140,22 +140,22 @@ struct DayCell: View {
     private var opacity: Double {
         // Inactive: before habit creation OR future days
         if isBeforeHabitCreation || isFuture {
-            return 0.08
+            return HabitOpacity.inactive
         }
 
         // Failed: after habit creation, in the past, but no completions
         if count == 0 {
-            return 0.20
+            return HabitOpacity.failed
         }
 
         // Completed: has completions
         if count >= goal {
-            return 1.0 // Full intensity for complete
+            return HabitOpacity.completed
         }
 
-        // Partial completion: scale between 0.4 and 0.85
+        // Partial completion: gradient based on progress
         let progress = Double(count) / Double(goal)
-        return 0.4 + (progress * 0.45)
+        return HabitOpacity.partial(progress: progress)
     }
 
     var body: some View {

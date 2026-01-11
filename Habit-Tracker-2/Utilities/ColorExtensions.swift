@@ -43,3 +43,26 @@ struct HabitColors {
 
     static var `default`: String { "#5C7CFA" }
 }
+
+/// Opacity values for habit color states
+enum HabitOpacity {
+    /// Inactive state: before habit creation, future days, unchecked buttons
+    static let inactive: Double = 0.15
+
+    /// Failed state: days within tracking period with no completions
+    static let failed: Double = 0.25
+
+    /// Minimum opacity for partial completions
+    static let partialMin: Double = 0.4
+
+    /// Maximum opacity for partial completions (just below full)
+    static let partialMax: Double = 0.85
+
+    /// Full completion
+    static let completed: Double = 1.0
+
+    /// Calculate opacity for partial completion progress
+    static func partial(progress: Double) -> Double {
+        partialMin + (progress * (partialMax - partialMin))
+    }
+}
