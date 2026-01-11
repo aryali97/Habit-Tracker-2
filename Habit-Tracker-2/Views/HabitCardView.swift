@@ -338,7 +338,10 @@ struct CompletionPickerSheet: View {
                             total: habit.completionsPerDay,
                             size: 180
                         )
-                        .stroke(habitColor.opacity(HabitOpacity.failed), lineWidth: 8)
+                        .stroke(
+                            habitColor.opacity(HabitOpacity.failed),
+                            style: StrokeStyle(lineWidth: 8, lineCap: .round)
+                        )
                     }
 
                     // Filled segments
@@ -401,7 +404,7 @@ struct CompletionPickerSheet: View {
 
                 Spacer()
             }
-            .padding(.top, 24)
+            .safeAreaPadding(.top, 56)
             .background(AppColors.background)
             .navigationTitle("Today's Progress")
             .navigationBarTitleDisplayMode(.inline)
