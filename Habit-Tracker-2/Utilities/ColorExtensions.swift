@@ -50,7 +50,7 @@ enum AppColors {
     static let background = Color(hex: "#0C0D0F")
 
     /// Card/input background color (darker than main)
-    static let cardBackground = Color(hex: "#15181C")
+    static let cardBackground = Color(hex: "#121417")
 
     /// Button background color
     static let buttonBackground = Color(white: 0.18)
