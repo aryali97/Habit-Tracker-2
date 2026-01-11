@@ -44,6 +44,7 @@ struct EditHabitView: View {
                 VStack(spacing: 24) {
                     // Icon Picker Button
                     IconPickerButton(icon: $icon, color: selectedColor) {
+                        Haptics.selection()
                         showIconPicker = true
                     }
 
@@ -172,6 +173,7 @@ struct EditHabitView: View {
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button {
+                        Haptics.impact(.light)
                         dismiss()
                     } label: {
                         Image(systemName: "xmark")
@@ -202,9 +204,21 @@ struct EditHabitView: View {
         .onAppear {
             loadExistingHabit()
         }
-        .sheet(isPresented: $showIconPicker) {
-            IconPickerView(selectedIcon: $icon)
-        }
+            .sheet(isPresented: $showIconPicker) {
+                IconPickerView(selectedIcon: $icon)
+            }
+            .onChange(of: completionsPerDay) { _, _ in
+                Haptics.selection()
+            }
+            .onChange(of: streakGoalValue) { _, _ in
+                Haptics.selection()
+            }
+            .onChange(of: streakGoalPeriod) { _, _ in
+                Haptics.selection()
+            }
+            .onChange(of: streakGoalType) { _, _ in
+                Haptics.selection()
+            }
     }
 
     private func loadExistingHabit() {
@@ -220,6 +234,7 @@ struct EditHabitView: View {
     }
 
     private func saveHabit() {
+        Haptics.notification(.success)
         if let habit = habitToEdit {
             // Update existing habit
             habit.icon = icon
@@ -283,6 +298,7 @@ struct ColorPickerGrid: View {
                     isSelected: selectedColor == colorHex
                 )
                 .onTapGesture {
+                    Haptics.selection()
                     selectedColor = colorHex
                 }
             }

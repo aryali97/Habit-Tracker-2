@@ -24,6 +24,7 @@ struct HabitListView: View {
                     Spacer()
 
                     Button {
+                        Haptics.impact(.light)
                         showingAddHabit = true
                     } label: {
                         Image(systemName: "plus")
@@ -65,6 +66,7 @@ struct HabitListView: View {
     }
 
     private func deleteHabit(_ habit: Habit) {
+        Haptics.impact(.rigid)
         modelContext.delete(habit)
     }
 }

@@ -37,11 +37,13 @@ struct HabitCardView: View {
                 }
                 .contentShape(Rectangle())
                 .onTapGesture {
+                    Haptics.impact(.light)
                     onEdit?()
                 }
                 .contextMenu {
                     if let onEdit = onEdit {
                         Button {
+                            Haptics.impact(.light)
                             onEdit()
                         } label: {
                             Label("Edit", systemImage: "pencil")
@@ -50,6 +52,7 @@ struct HabitCardView: View {
 
                     if let onDelete = onDelete {
                         Button(role: .destructive) {
+                            Haptics.impact(.rigid)
                             onDelete()
                         } label: {
                             Label("Delete", systemImage: "trash")
@@ -145,6 +148,9 @@ struct CompletionButtonView: View {
         // Toggle for once-per-day habits
         let today = Calendar.current.startOfDay(for: Date())
 
+        let isCompleting = !isCompletedToday
+        Haptics.impact(isCompleting ? .medium : .light)
+
         if let completion = todayCompletion {
             completion.count = completion.count > 0 ? 0 : 1
         } else {
@@ -152,11 +158,17 @@ struct CompletionButtonView: View {
             completion.habit = habit
             modelContext.insert(completion)
         }
+
+        saveContext()
     }
 
     private func incrementCompletion() {
         // Increment for multi-completion habits (only when not complete)
         let today = Calendar.current.startOfDay(for: Date())
+
+        let nextCount = (todayCompletion?.count ?? 0) + 1
+        let impactStyle: Haptics.ImpactStyle = nextCount >= habit.completionsPerDay ? .medium : .light
+        Haptics.impact(impactStyle)
 
         if let completion = todayCompletion {
             completion.count += 1
@@ -165,12 +177,16 @@ struct CompletionButtonView: View {
             completion.habit = habit
             modelContext.insert(completion)
         }
+
+        saveContext()
     }
 
     private func resetCompletion() {
         // Reset multi-completion habit to 0
         if let completion = todayCompletion {
+            Haptics.impact(.light)
             completion.count = 0
+            saveContext()
         }
     }
 
@@ -183,6 +199,17 @@ struct CompletionButtonView: View {
             let completion = HabitCompletion(date: today, count: count)
             completion.habit = habit
             modelContext.insert(completion)
+        }
+
+        Haptics.notification(.success)
+        saveContext()
+    }
+
+    private func saveContext() {
+        do {
+            try modelContext.save()
+        } catch {
+            assertionFailure("Failed to save habit completion: \(error)")
         }
     }
 }
@@ -230,8 +257,7 @@ struct SegmentedProgressButton: View {
             onTap()
         }
         .onLongPressGesture(minimumDuration: 0.5) {
-            let generator = UIImpactFeedbackGenerator(style: .medium)
-            generator.impactOccurred()
+            Haptics.impact(.medium)
             onLongPress()
         }
     }
@@ -343,6 +369,7 @@ struct CompletionPickerSheet: View {
                     Button {
                         if selectedCount > 0 {
                             selectedCount -= 1
+                            Haptics.selection()
                         }
                     } label: {
                         Image(systemName: "minus")
@@ -358,6 +385,7 @@ struct CompletionPickerSheet: View {
                     Button {
                         if selectedCount < habit.completionsPerDay {
                             selectedCount += 1
+                            Haptics.selection()
                         }
                     } label: {
                         Image(systemName: "plus")
@@ -380,6 +408,7 @@ struct CompletionPickerSheet: View {
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") {
+                        Haptics.impact(.light)
                         dismiss()
                     }
                 }

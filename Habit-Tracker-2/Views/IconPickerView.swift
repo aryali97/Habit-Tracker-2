@@ -152,6 +152,7 @@ struct IconPickerView: View {
                                         icon: icon,
                                         isSelected: selectedIcon == icon,
                                         onTap: {
+                                            Haptics.selection()
                                             selectedIcon = icon
                                             dismiss()
                                         }
@@ -170,6 +171,7 @@ struct IconPickerView: View {
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button {
+                        Haptics.impact(.light)
                         dismiss()
                     } label: {
                         Image(systemName: "xmark")
