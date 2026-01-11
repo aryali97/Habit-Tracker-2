@@ -47,13 +47,20 @@ struct HabitColors {
 /// App background colors
 enum AppColors {
     /// Main background color (dark gray)
-    static let background = Color(white: 0.12)
+    static let background = Color(hex: "#0C0D0F")
 
     /// Card/input background color (darker than main)
     static let cardBackground = Color(white: 0.07)
 
     /// Button background color
     static let buttonBackground = Color(white: 0.18)
+
+    /// Header secondary text color
+    static let headerSecondary = Color.white.opacity(0.6)
+
+    /// Header add button colors
+    static let addButtonBackground = Color(hex: "#45E06F")
+    static let addButtonForeground = Color(hex: "#0C0D0F")
 }
 
 /// Opacity values for habit color states

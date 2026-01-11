@@ -12,14 +12,27 @@ struct HabitListView: View {
     @State private var showingAddHabit = false
     @State private var habitToEdit: Habit?
 
+    private let dateFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "EEEE, MMM d"
+        formatter.locale = Locale.current
+        return formatter
+    }()
+
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
                 // Custom header row
                 HStack {
-                    Text("Habits")
-                        .font(.system(size: 28, weight: .bold))
-                        .foregroundStyle(.white)
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(dateFormatter.string(from: Date()).uppercased())
+                            .font(.system(size: 11, weight: .semibold))
+                            .foregroundStyle(AppColors.headerSecondary)
+
+                        Text("Habits")
+                            .font(.system(size: 32, weight: .bold))
+                            .foregroundStyle(.white)
+                    }
 
                     Spacer()
 
@@ -28,15 +41,15 @@ struct HabitListView: View {
                         showingAddHabit = true
                     } label: {
                         Image(systemName: "plus")
-                            .font(.system(size: 16, weight: .semibold))
-                            .foregroundStyle(.white)
-                            .frame(width: 32, height: 32)
-                            .background(AppColors.buttonBackground)
+                            .font(.system(size: 18, weight: .bold))
+                            .foregroundStyle(AppColors.addButtonForeground)
+                            .frame(width: 36, height: 36)
+                            .background(AppColors.addButtonBackground)
                             .clipShape(Circle())
                     }
                 }
                 .padding(.horizontal)
-                .padding(.top, 8)
+                .padding(.top, 12)
                 .padding(.bottom, 16)
 
                 ScrollView {
