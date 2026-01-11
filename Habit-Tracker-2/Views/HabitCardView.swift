@@ -107,9 +107,16 @@ struct CompletionButtonView: View {
                 Button(action: toggleCompletion) {
                     Image(systemName: "checkmark")
                         .font(.system(size: 16, weight: .bold))
-                        .foregroundStyle(.white)
+                        .foregroundStyle(isCompletedToday ? .white : habitColor)
                         .frame(width: 44, height: 44)
-                        .background(isCompletedToday ? habitColor : habitColor.opacity(HabitOpacity.inactive))
+                        .background(isCompletedToday ? habitColor : .clear)
+                        .overlay(
+                            Circle()
+                                .stroke(
+                                    isCompletedToday ? .clear : habitColor.opacity(HabitOpacity.inactive),
+                                    lineWidth: 2
+                                )
+                        )
                         .clipShape(Circle())
                         .shadow(
                             color: isCompletedToday ? habitColor.opacity(0.45) : .clear,
@@ -238,12 +245,9 @@ struct SegmentedProgressButton: View {
     private let size: CGFloat = 44
     private let lineWidth: CGFloat = 3
     private let gapDegrees: Double = 6
-    private let arcInset: CGFloat = 4
 
     var body: some View {
         ZStack {
-            Circle()
-                .fill(color.opacity(HabitOpacity.inactive))
             // Background segments
             ForEach(0..<goal, id: \.self) { index in
                 segmentArc(index: index, filled: false)
@@ -283,7 +287,7 @@ struct SegmentedProgressButton: View {
         return Path { path in
             path.addArc(
                 center: CGPoint(x: size / 2, y: size / 2),
-                radius: ((size - lineWidth) / 2) - arcInset,
+                radius: (size - lineWidth) / 2,
                 startAngle: .degrees(startAngle),
                 endAngle: .degrees(endAngle),
                 clockwise: false
