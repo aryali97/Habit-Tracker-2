@@ -105,14 +105,25 @@ struct CompletionButtonView: View {
                         .clipShape(RoundedRectangle(cornerRadius: 10))
                 }
                 .buttonStyle(.plain)
+            } else if isCompletedToday {
+                // Show checkmark when multi-completion habit is fully complete
+                Button(action: resetCompletion) {
+                    Image(systemName: "checkmark")
+                        .font(.system(size: 16, weight: .bold))
+                        .foregroundStyle(.white)
+                        .frame(width: 44, height: 44)
+                        .background(habitColor)
+                        .clipShape(RoundedRectangle(cornerRadius: 10))
+                }
+                .buttonStyle(.plain)
             } else {
-                // Progress ring for multi-completion habits
+                // Progress ring for multi-completion habits (not yet complete)
                 SegmentedProgressButton(
                     count: todayCount,
                     goal: habit.completionsPerDay,
                     color: habitColor,
                     isComplete: isCompletedToday,
-                    onTap: toggleCompletion,
+                    onTap: incrementCompletion,
                     onLongPress: { showingPicker = true }
                 )
                 .sheet(isPresented: $showingPicker) {
@@ -130,25 +141,35 @@ struct CompletionButtonView: View {
     }
 
     private func toggleCompletion() {
+        // Toggle for once-per-day habits
         let today = Calendar.current.startOfDay(for: Date())
 
         if let completion = todayCompletion {
-            if habit.completionsPerDay == 1 {
-                // Toggle for once-per-day
-                completion.count = completion.count > 0 ? 0 : 1
-            } else {
-                // Increment for multi-completion (wrap around if at max)
-                if completion.count >= habit.completionsPerDay {
-                    completion.count = 0
-                } else {
-                    completion.count += 1
-                }
-            }
+            completion.count = completion.count > 0 ? 0 : 1
         } else {
-            // Create new completion
             let completion = HabitCompletion(date: today, count: 1)
             completion.habit = habit
             modelContext.insert(completion)
+        }
+    }
+
+    private func incrementCompletion() {
+        // Increment for multi-completion habits (only when not complete)
+        let today = Calendar.current.startOfDay(for: Date())
+
+        if let completion = todayCompletion {
+            completion.count += 1
+        } else {
+            let completion = HabitCompletion(date: today, count: 1)
+            completion.habit = habit
+            modelContext.insert(completion)
+        }
+    }
+
+    private func resetCompletion() {
+        // Reset multi-completion habit to 0
+        if let completion = todayCompletion {
+            completion.count = 0
         }
     }
 
