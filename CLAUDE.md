@@ -107,6 +107,9 @@ Grid of preset colors for habit selection:
 - Subtle shadows for depth
 - Habit color used throughout: emoji background, completion button, grid cells, streak outlines
 
+### UX Examples
+Take a look at ~/Downloads/habit_tracker_example_images/ for examples of how the UX should look.
+
 ## Development Phases
 
 ### Phase 1: Data Layer
