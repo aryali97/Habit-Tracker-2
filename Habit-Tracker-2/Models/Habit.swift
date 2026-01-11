@@ -9,6 +9,7 @@ import SwiftData
 enum StreakPeriod: String, Codable, CaseIterable {
     case day
     case week
+    case month
 }
 
 enum StreakGoalType: String, Codable, CaseIterable {

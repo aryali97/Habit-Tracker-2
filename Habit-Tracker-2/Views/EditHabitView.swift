@@ -139,6 +139,7 @@ struct EditHabitView: View {
                             Picker("Period", selection: $streakGoalPeriod) {
                                 Text("Day").tag(StreakPeriod.day)
                                 Text("Week").tag(StreakPeriod.week)
+                                Text("Month").tag(StreakPeriod.month)
                             }
                             .pickerStyle(.menu)
                             .tint(.white)
@@ -169,7 +170,7 @@ struct EditHabitView: View {
                         .pickerStyle(.segmented)
 
                         Text(streakGoalType == .dayBasis
-                            ? "Complete on \(streakGoalValue) \(streakGoalPeriod == .day ? "consecutive days" : "days this week")"
+                            ? "Complete on \(streakGoalValue) \(streakGoalPeriod == .day ? "consecutive days" : "days this \(streakGoalPeriod.rawValue)")"
                             : "Reach \(streakGoalValue) total completions this \(streakGoalPeriod.rawValue)")
                             .font(.caption)
                             .foregroundStyle(.secondary)
