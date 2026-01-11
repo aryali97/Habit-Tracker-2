@@ -27,7 +27,7 @@ struct HabitCardView: View {
                         .foregroundStyle(habitColor)
                         .frame(width: 44, height: 44)
                         .background(habitColor.opacity(HabitOpacity.inactive))
-                        .clipShape(RoundedRectangle(cornerRadius: 10))
+                        .clipShape(Circle())
 
                     Text(habit.name)
                         .font(.system(size: 17, weight: .medium))
@@ -110,7 +110,13 @@ struct CompletionButtonView: View {
                         .foregroundStyle(.white)
                         .frame(width: 44, height: 44)
                         .background(isCompletedToday ? habitColor : habitColor.opacity(HabitOpacity.inactive))
-                        .clipShape(RoundedRectangle(cornerRadius: 10))
+                        .clipShape(Circle())
+                        .shadow(
+                            color: isCompletedToday ? habitColor.opacity(0.45) : .clear,
+                            radius: 10,
+                            x: 0,
+                            y: 6
+                        )
                 }
                 .buttonStyle(.plain)
             } else if isCompletedToday {
@@ -121,7 +127,8 @@ struct CompletionButtonView: View {
                         .foregroundStyle(.white)
                         .frame(width: 44, height: 44)
                         .background(habitColor)
-                        .clipShape(RoundedRectangle(cornerRadius: 10))
+                        .clipShape(Circle())
+                        .shadow(color: habitColor.opacity(0.45), radius: 10, x: 0, y: 6)
                 }
                 .buttonStyle(.plain)
             } else {
@@ -231,12 +238,11 @@ struct SegmentedProgressButton: View {
     private let size: CGFloat = 44
     private let lineWidth: CGFloat = 3
     private let gapDegrees: Double = 6
-    private let cornerRadius: CGFloat = 10
     private let arcInset: CGFloat = 4
 
     var body: some View {
         ZStack {
-            RoundedRectangle(cornerRadius: cornerRadius)
+            Circle()
                 .fill(color.opacity(HabitOpacity.inactive))
             // Background segments
             ForEach(0..<goal, id: \.self) { index in
@@ -256,7 +262,7 @@ struct SegmentedProgressButton: View {
                 .foregroundStyle(.white)
         }
         .frame(width: size, height: size)
-        .contentShape(RoundedRectangle(cornerRadius: cornerRadius))
+        .contentShape(Circle())
         .onTapGesture {
             onTap()
         }
