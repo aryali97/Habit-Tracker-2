@@ -60,8 +60,8 @@ struct HabitCardView: View {
                 CompletionButtonView(habit: habit)
             }
 
-            // Grid placeholder
-            HabitGridPlaceholderView(habit: habit)
+            // Completion grid
+            HabitGridView(habit: habit)
         }
         .padding()
         .background(Color(.systemGray6).opacity(0.1))
@@ -402,25 +402,6 @@ struct LargeSegmentArc: Shape {
             clockwise: false
         )
         return path
-    }
-}
-
-struct HabitGridPlaceholderView: View {
-    let habit: Habit
-
-    private var habitColor: Color {
-        Color(hex: habit.color)
-    }
-
-    var body: some View {
-        // Placeholder grid - will be replaced with actual grid in Phase 5
-        LazyVGrid(columns: Array(repeating: GridItem(.fixed(8), spacing: 2), count: 20), spacing: 2) {
-            ForEach(0..<140, id: \.self) { index in
-                RoundedRectangle(cornerRadius: 1)
-                    .fill(habitColor.opacity(0.15))
-                    .frame(width: 8, height: 8)
-            }
-        }
     }
 }
 

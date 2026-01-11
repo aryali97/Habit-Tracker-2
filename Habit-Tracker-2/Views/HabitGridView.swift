@@ -1,0 +1,213 @@
+//
+//  HabitGridView.swift
+//  Habit-Tracker-2
+//
+
+import SwiftUI
+import SwiftData
+
+struct HabitGridView: View {
+    let habit: Habit
+
+    private let cellSize: CGFloat = 10
+    private let cellSpacing: CGFloat = 2
+    private let numberOfWeeks = 52
+    private let daysInWeek = 7
+
+    private var habitColor: Color {
+        Color(hex: habit.color)
+    }
+
+    // Calculate the start date (52 weeks ago, aligned to Sunday)
+    private var gridStartDate: Date {
+        let calendar = Calendar.current
+        let today = calendar.startOfDay(for: Date())
+
+        // Find the Sunday of the current week
+        let weekday = calendar.component(.weekday, from: today)
+        let daysFromSunday = weekday - 1 // Sunday = 1
+        let currentWeekSunday = calendar.date(byAdding: .day, value: -daysFromSunday, to: today)!
+
+        // Go back 51 weeks to get 52 total weeks
+        return calendar.date(byAdding: .weekOfYear, value: -(numberOfWeeks - 1), to: currentWeekSunday)!
+    }
+
+    // Build a lookup dictionary for completions by date
+    private var completionsByDate: [Date: Int] {
+        var dict: [Date: Int] = [:]
+        let calendar = Calendar.current
+        for completion in habit.completions {
+            let dateKey = calendar.startOfDay(for: completion.date)
+            dict[dateKey] = completion.count
+        }
+        return dict
+    }
+
+    var body: some View {
+        ScrollViewReader { proxy in
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: cellSpacing) {
+                    ForEach(0..<numberOfWeeks, id: \.self) { weekIndex in
+                        WeekColumn(
+                            weekIndex: weekIndex,
+                            gridStartDate: gridStartDate,
+                            completionsByDate: completionsByDate,
+                            completionsPerDay: habit.completionsPerDay,
+                            habitColor: habitColor,
+                            cellSize: cellSize,
+                            cellSpacing: cellSpacing
+                        )
+                        .id(weekIndex)
+                    }
+                }
+                .padding(.horizontal, 4)
+            }
+            .onAppear {
+                // Scroll to the last week (current week) on appear
+                proxy.scrollTo(numberOfWeeks - 1, anchor: .trailing)
+            }
+        }
+    }
+}
+
+// MARK: - Week Column
+
+struct WeekColumn: View {
+    let weekIndex: Int
+    let gridStartDate: Date
+    let completionsByDate: [Date: Int]
+    let completionsPerDay: Int
+    let habitColor: Color
+    let cellSize: CGFloat
+    let cellSpacing: CGFloat
+
+    private let daysInWeek = 7
+
+    var body: some View {
+        VStack(spacing: cellSpacing) {
+            ForEach(0..<daysInWeek, id: \.self) { dayIndex in
+                let date = dateForCell(weekIndex: weekIndex, dayIndex: dayIndex)
+                let count = completionsByDate[date] ?? 0
+
+                DayCell(
+                    date: date,
+                    count: count,
+                    goal: completionsPerDay,
+                    color: habitColor,
+                    size: cellSize
+                )
+            }
+        }
+    }
+
+    private func dateForCell(weekIndex: Int, dayIndex: Int) -> Date {
+        let calendar = Calendar.current
+        let daysOffset = (weekIndex * daysInWeek) + dayIndex
+        return calendar.date(byAdding: .day, value: daysOffset, to: gridStartDate)!
+    }
+}
+
+// MARK: - Day Cell
+
+struct DayCell: View {
+    let date: Date
+    let count: Int
+    let goal: Int
+    let color: Color
+    let size: CGFloat
+
+    private var isFuture: Bool {
+        date > Date()
+    }
+
+    private var opacity: Double {
+        if isFuture {
+            return 0.05 // Very faint for future dates
+        }
+
+        if count == 0 {
+            return 0.1 // Faint for no completions
+        }
+
+        if count >= goal {
+            return 1.0 // Full intensity for complete
+        }
+
+        // Partial completion: scale between 0.3 and 0.8
+        let progress = Double(count) / Double(goal)
+        return 0.3 + (progress * 0.5)
+    }
+
+    var body: some View {
+        RoundedRectangle(cornerRadius: 2)
+            .fill(color.opacity(opacity))
+            .frame(width: size, height: size)
+    }
+}
+
+// MARK: - Preview
+
+#Preview("Grid with completions") {
+    let config = ModelConfiguration(isStoredInMemoryOnly: true)
+    let container = try! ModelContainer(for: Habit.self, configurations: config)
+
+    let habit = Habit(
+        name: "Morning Run",
+        emoji: "🏃",
+        color: "#51CF66",
+        completionsPerDay: 1
+    )
+    container.mainContext.insert(habit)
+
+    // Add some sample completions
+    let calendar = Calendar.current
+    let today = Date()
+
+    for dayOffset in [0, -1, -2, -3, -5, -7, -8, -10, -14, -15, -16] {
+        if let date = calendar.date(byAdding: .day, value: dayOffset, to: today) {
+            let completion = HabitCompletion(date: date, count: 1)
+            completion.habit = habit
+            container.mainContext.insert(completion)
+        }
+    }
+
+    return HabitGridView(habit: habit)
+        .padding()
+        .background(Color.black)
+        .modelContainer(container)
+}
+
+#Preview("Multi-completion grid") {
+    let config = ModelConfiguration(isStoredInMemoryOnly: true)
+    let container = try! ModelContainer(for: Habit.self, configurations: config)
+
+    let habit = Habit(
+        name: "Drink Water",
+        emoji: "💧",
+        color: "#339AF0",
+        completionsPerDay: 8
+    )
+    container.mainContext.insert(habit)
+
+    // Add sample completions with varying counts
+    let calendar = Calendar.current
+    let today = Date()
+
+    let completionData: [(Int, Int)] = [
+        (0, 6), (-1, 8), (-2, 4), (-3, 8), (-4, 2),
+        (-5, 8), (-6, 7), (-7, 8), (-8, 3), (-9, 8)
+    ]
+
+    for (dayOffset, count) in completionData {
+        if let date = calendar.date(byAdding: .day, value: dayOffset, to: today) {
+            let completion = HabitCompletion(date: date, count: count)
+            completion.habit = habit
+            container.mainContext.insert(completion)
+        }
+    }
+
+    return HabitGridView(habit: habit)
+        .padding()
+        .background(Color.black)
+        .modelContainer(container)
+}
