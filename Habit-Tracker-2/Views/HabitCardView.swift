@@ -25,11 +25,11 @@ struct HabitCardView: View {
                     Text(habit.emoji)
                         .font(.title2)
                         .frame(width: 44, height: 44)
-                        .background(habitColor.opacity(0.2))
+                        .background(habitColor.opacity(0.25))
                         .clipShape(RoundedRectangle(cornerRadius: 10))
 
                     Text(habit.name)
-                        .font(.headline)
+                        .font(.system(size: 17, weight: .medium))
                         .foregroundStyle(.white)
 
                     Spacer()
@@ -64,12 +64,8 @@ struct HabitCardView: View {
             HabitGridView(habit: habit)
         }
         .padding()
-        .background(Color(.systemGray6).opacity(0.1))
+        .background(Color(white: 0.1))
         .clipShape(RoundedRectangle(cornerRadius: 16))
-        .overlay(
-            RoundedRectangle(cornerRadius: 16)
-                .stroke(habitColor.opacity(0.3), lineWidth: 1)
-        )
     }
 }
 
@@ -103,14 +99,10 @@ struct CompletionButtonView: View {
                 Button(action: toggleCompletion) {
                     Image(systemName: "checkmark")
                         .font(.system(size: 16, weight: .bold))
-                        .foregroundStyle(isCompletedToday ? habitColor : .gray)
+                        .foregroundStyle(.white)
                         .frame(width: 44, height: 44)
-                        .background(isCompletedToday ? habitColor.opacity(0.2) : Color.clear)
+                        .background(isCompletedToday ? habitColor : habitColor.opacity(0.15))
                         .clipShape(RoundedRectangle(cornerRadius: 10))
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 10)
-                                .stroke(isCompletedToday ? habitColor : .gray.opacity(0.5), lineWidth: 2)
-                        )
                 }
                 .buttonStyle(.plain)
             } else {
@@ -192,7 +184,7 @@ struct SegmentedProgressButton: View {
             // Background segments
             ForEach(0..<goal, id: \.self) { index in
                 segmentArc(index: index, filled: false)
-                    .stroke(color.opacity(0.2), lineWidth: lineWidth)
+                    .stroke(color.opacity(0.25), lineWidth: lineWidth)
             }
 
             // Filled segments
@@ -204,7 +196,7 @@ struct SegmentedProgressButton: View {
             // Plus icon
             Image(systemName: "plus")
                 .font(.system(size: 14, weight: .bold))
-                .foregroundStyle(isComplete ? color : .gray)
+                .foregroundStyle(isComplete ? color : color.opacity(0.5))
         }
         .frame(width: size, height: size)
         .contentShape(Circle())

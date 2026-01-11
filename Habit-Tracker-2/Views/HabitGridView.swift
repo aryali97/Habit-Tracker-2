@@ -18,6 +18,10 @@ struct HabitGridView: View {
         Color(hex: habit.color)
     }
 
+    private var habitCreatedAt: Date {
+        Calendar.current.startOfDay(for: habit.createdAt)
+    }
+
     // Calculate the start date (52 weeks ago, aligned to Sunday)
     private var gridStartDate: Date {
         let calendar = Calendar.current
@@ -54,6 +58,7 @@ struct HabitGridView: View {
                             completionsByDate: completionsByDate,
                             completionsPerDay: habit.completionsPerDay,
                             habitColor: habitColor,
+                            habitCreatedAt: habitCreatedAt,
                             cellSize: cellSize,
                             cellSpacing: cellSpacing
                         )
@@ -78,6 +83,7 @@ struct WeekColumn: View {
     let completionsByDate: [Date: Int]
     let completionsPerDay: Int
     let habitColor: Color
+    let habitCreatedAt: Date
     let cellSize: CGFloat
     let cellSpacing: CGFloat
 
@@ -94,6 +100,7 @@ struct WeekColumn: View {
                     count: count,
                     goal: completionsPerDay,
                     color: habitColor,
+                    habitCreatedAt: habitCreatedAt,
                     size: cellSize
                 )
             }
@@ -114,32 +121,45 @@ struct DayCell: View {
     let count: Int
     let goal: Int
     let color: Color
+    let habitCreatedAt: Date
     let size: CGFloat
 
-    private var isFuture: Bool {
-        date > Date()
+    private var today: Date {
+        Calendar.current.startOfDay(for: Date())
     }
 
+    private var isFuture: Bool {
+        date > today
+    }
+
+    private var isBeforeHabitCreation: Bool {
+        date < habitCreatedAt
+    }
+
+    // Three states: inactive (darkest), failed (medium), completed (brightest)
     private var opacity: Double {
-        if isFuture {
-            return 0.05 // Very faint for future dates
+        // Inactive: before habit creation OR future days
+        if isBeforeHabitCreation || isFuture {
+            return 0.08
         }
 
+        // Failed: after habit creation, in the past, but no completions
         if count == 0 {
-            return 0.1 // Faint for no completions
+            return 0.20
         }
 
+        // Completed: has completions
         if count >= goal {
             return 1.0 // Full intensity for complete
         }
 
-        // Partial completion: scale between 0.3 and 0.8
+        // Partial completion: scale between 0.4 and 0.85
         let progress = Double(count) / Double(goal)
-        return 0.3 + (progress * 0.5)
+        return 0.4 + (progress * 0.45)
     }
 
     var body: some View {
-        RoundedRectangle(cornerRadius: 2)
+        RoundedRectangle(cornerRadius: 2.5)
             .fill(color.opacity(opacity))
             .frame(width: size, height: size)
     }

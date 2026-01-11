@@ -40,7 +40,8 @@ final class Habit: Identifiable {
         completionsPerDay: Int = 1,
         streakGoalValue: Int = 1,
         streakGoalPeriod: StreakPeriod = .day,
-        streakGoalType: StreakGoalType = .dayBasis
+        streakGoalType: StreakGoalType = .dayBasis,
+        createdAt: Date = Date()
     ) {
         self.id = UUID()
         self.name = name
@@ -51,6 +52,6 @@ final class Habit: Identifiable {
         self.streakGoalValue = max(1, streakGoalValue)
         self.streakGoalPeriod = streakGoalPeriod
         self.streakGoalType = streakGoalType
-        self.createdAt = Date()
+        self.createdAt = createdAt
     }
 }

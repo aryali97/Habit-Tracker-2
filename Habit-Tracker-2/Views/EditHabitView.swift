@@ -55,7 +55,7 @@ struct EditHabitView: View {
                         TextField("Habit name", text: $name)
                             .textFieldStyle(.plain)
                             .padding()
-                            .background(Color(.systemGray6).opacity(0.3))
+                            .background(Color(white: 0.12))
                             .clipShape(RoundedRectangle(cornerRadius: 12))
                     }
 
@@ -68,7 +68,7 @@ struct EditHabitView: View {
                         TextField("Optional description", text: $habitDescription)
                             .textFieldStyle(.plain)
                             .padding()
-                            .background(Color(.systemGray6).opacity(0.3))
+                            .background(Color(white: 0.12))
                             .clipShape(RoundedRectangle(cornerRadius: 12))
                     }
 
@@ -102,7 +102,7 @@ struct EditHabitView: View {
                                 .labelsHidden()
                         }
                         .padding()
-                        .background(Color(.systemGray6).opacity(0.3))
+                        .background(Color(white: 0.12))
                         .clipShape(RoundedRectangle(cornerRadius: 12))
 
                         Text("The square will be filled completely when this number is met")
@@ -138,7 +138,7 @@ struct EditHabitView: View {
                                 .labelsHidden()
                         }
                         .padding()
-                        .background(Color(.systemGray6).opacity(0.3))
+                        .background(Color(white: 0.12))
                         .clipShape(RoundedRectangle(cornerRadius: 12))
                     }
 
@@ -277,7 +277,7 @@ struct EmojiPickerButton: View {
                 Text(emoji)
                     .font(.system(size: 48))
                     .frame(width: 88, height: 88)
-                    .background(Color(.systemGray6).opacity(0.5))
+                    .background(Color(white: 0.12))
                     .clipShape(Circle())
             }
         }
