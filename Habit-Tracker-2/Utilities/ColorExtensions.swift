@@ -44,6 +44,18 @@ struct HabitColors {
     static var `default`: String { "#5C7CFA" }
 }
 
+/// App background colors
+enum AppColors {
+    /// Main background color (dark gray)
+    static let background = Color(white: 0.12)
+
+    /// Card/input background color (darker than main)
+    static let cardBackground = Color(white: 0.07)
+
+    /// Button background color
+    static let buttonBackground = Color(white: 0.18)
+}
+
 /// Opacity values for habit color states
 enum HabitOpacity {
     /// Inactive state: before habit creation, future days, unchecked buttons

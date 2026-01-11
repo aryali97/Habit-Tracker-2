@@ -30,7 +30,7 @@ struct HabitListView: View {
                             .font(.system(size: 16, weight: .semibold))
                             .foregroundStyle(.white)
                             .frame(width: 32, height: 32)
-                            .background(Color(white: 0.2))
+                            .background(AppColors.buttonBackground)
                             .clipShape(Circle())
                     }
                 }
@@ -52,7 +52,7 @@ struct HabitListView: View {
                     .padding(.bottom)
                 }
             }
-            .background(Color.black)
+            .background(AppColors.background)
             .navigationBarHidden(true)
             .sheet(isPresented: $showingAddHabit) {
                 EditHabitView()

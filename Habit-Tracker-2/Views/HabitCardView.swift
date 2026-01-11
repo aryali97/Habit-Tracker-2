@@ -64,7 +64,7 @@ struct HabitCardView: View {
             HabitGridView(habit: habit)
         }
         .padding()
-        .background(Color(white: 0.1))
+        .background(AppColors.cardBackground)
         .clipShape(RoundedRectangle(cornerRadius: 16))
     }
 }
@@ -368,7 +368,7 @@ struct CompletionPickerSheet: View {
                 Spacer()
             }
             .padding(.top, 24)
-            .background(Color.black)
+            .background(AppColors.background)
             .navigationTitle("Today's Progress")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -436,7 +436,7 @@ struct HabitCardPreview {
 
         return HabitCardView(habit: habit)
             .padding()
-            .background(Color.black)
+            .background(AppColors.background)
             .modelContainer(container)
     }
 
@@ -453,7 +453,7 @@ struct HabitCardPreview {
 
         return HabitCardView(habit: habit)
             .padding()
-            .background(Color.black)
+            .background(AppColors.background)
             .modelContainer(container)
     }
 }

@@ -193,7 +193,7 @@ struct DayCell: View {
 
     return HabitGridView(habit: habit)
         .padding()
-        .background(Color.black)
+        .background(AppColors.background)
         .modelContainer(container)
 }
 
@@ -228,6 +228,6 @@ struct DayCell: View {
 
     return HabitGridView(habit: habit)
         .padding()
-        .background(Color.black)
+        .background(AppColors.background)
         .modelContainer(container)
 }
