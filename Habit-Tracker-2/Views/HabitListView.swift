@@ -10,6 +10,7 @@ struct HabitListView: View {
     @Environment(\.modelContext) private var modelContext
     @Query(sort: \Habit.createdAt) private var habits: [Habit]
     @State private var showingAddHabit = false
+    @State private var habitToEdit: Habit?
 
     var body: some View {
         NavigationStack {
@@ -17,7 +18,17 @@ struct HabitListView: View {
                 LazyVStack(spacing: 16) {
                     ForEach(habits) { habit in
                         HabitCardView(habit: habit)
+                            .contentShape(Rectangle())
+                            .onTapGesture {
+                                habitToEdit = habit
+                            }
                             .contextMenu {
+                                Button {
+                                    habitToEdit = habit
+                                } label: {
+                                    Label("Edit", systemImage: "pencil")
+                                }
+
                                 Button(role: .destructive) {
                                     deleteHabit(habit)
                                 } label: {
@@ -41,7 +52,10 @@ struct HabitListView: View {
                 }
             }
             .sheet(isPresented: $showingAddHabit) {
-                AddHabitPlaceholderView()
+                EditHabitView()
+            }
+            .sheet(item: $habitToEdit) { habit in
+                EditHabitView(habit: habit)
             }
         }
         .preferredColorScheme(.dark)
@@ -52,42 +66,6 @@ struct HabitListView: View {
     }
 }
 
-// Placeholder until Phase 3
-struct AddHabitPlaceholderView: View {
-    @Environment(\.dismiss) private var dismiss
-    @Environment(\.modelContext) private var modelContext
-
-    var body: some View {
-        NavigationStack {
-            VStack(spacing: 20) {
-                Text("Add Habit")
-                    .font(.title)
-
-                Text("Full edit view coming in Phase 3")
-                    .foregroundStyle(.secondary)
-
-                Button("Add Sample Habit") {
-                    let habit = Habit(
-                        name: "Sample Habit",
-                        emoji: ["🏃", "💪", "📚", "💧", "🧘"].randomElement()!,
-                        color: HabitColors.palette.randomElement()!
-                    )
-                    modelContext.insert(habit)
-                    dismiss()
-                }
-                .buttonStyle(.borderedProminent)
-            }
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") {
-                        dismiss()
-                    }
-                }
-            }
-        }
-        .presentationDetents([.medium])
-    }
-}
 
 #Preview("Empty state") {
     HabitListView()

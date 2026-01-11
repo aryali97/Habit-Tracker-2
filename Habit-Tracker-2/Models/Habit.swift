@@ -17,7 +17,7 @@ enum StreakGoalType: String, Codable, CaseIterable {
 }
 
 @Model
-final class Habit {
+final class Habit: Identifiable {
     var id: UUID
     var name: String
     var habitDescription: String?
