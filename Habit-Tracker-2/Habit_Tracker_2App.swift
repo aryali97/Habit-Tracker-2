@@ -14,8 +14,23 @@ struct Habit_Tracker_2App: App {
 
     init() {
         let schema = Schema([Habit.self, HabitCompletion.self])
-        let config = ModelConfiguration(schema: schema)
-        container = try! ModelContainer(for: schema, configurations: config)
+        let storeURL = Self.makeStoreURL()
+        let config = ModelConfiguration(schema: schema, url: storeURL)
+        let builtContainer: ModelContainer
+
+        do {
+            builtContainer = try ModelContainer(for: schema, configurations: config)
+        } catch {
+            #if targetEnvironment(simulator)
+            print("SwiftData migration failed on simulator. Clearing store and retrying: \(error)")
+            Self.deletePersistentStore(at: storeURL)
+            builtContainer = try! ModelContainer(for: schema, configurations: config)
+            #else
+            fatalError("SwiftData container failed to initialize: \(error)")
+            #endif
+        }
+
+        container = builtContainer
 
         // Insert sample data if no habits exist
         insertSampleDataIfNeeded()
@@ -66,5 +81,25 @@ struct Habit_Tracker_2App: App {
 
         let waterHabit = Habit(name: "Drink Water", icon: "drop.fill", color: "#339AF0", completionsPerDay: 8)
         context.insert(waterHabit)
+    }
+
+    private static func makeStoreURL() -> URL {
+        let fileManager = FileManager.default
+        let appSupport = fileManager.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
+        if !fileManager.fileExists(atPath: appSupport.path) {
+            try? fileManager.createDirectory(at: appSupport, withIntermediateDirectories: true)
+        }
+        return appSupport.appendingPathComponent("default.store")
+    }
+
+    private static func deletePersistentStore(at url: URL) {
+        let fileManager = FileManager.default
+        let walURL = URL(fileURLWithPath: url.path + "-wal")
+        let shmURL = URL(fileURLWithPath: url.path + "-shm")
+        let relatedURLs = [url, walURL, shmURL]
+
+        for relatedURL in relatedURLs {
+            _ = try? fileManager.removeItem(at: relatedURL)
+        }
     }
 }
