@@ -18,9 +18,9 @@ struct HabitCardView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             // Header row: icon, name, completion button
-            HStack {
+            HStack(alignment: .center, spacing: 12) {
                 // Icon and name section (tappable for edit, has context menu)
-                HStack {
+                HStack(spacing: 12) {
                     // Icon with colored background (inactive color)
                     Image(systemName: habit.icon)
                         .font(.system(size: 20, weight: .medium))
