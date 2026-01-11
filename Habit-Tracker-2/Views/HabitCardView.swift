@@ -67,9 +67,13 @@ struct HabitCardView: View {
             // Completion grid
             HabitGridView(habit: habit)
         }
-        .padding()
-        .background(AppColors.cardBackground)
-        .clipShape(RoundedRectangle(cornerRadius: 16))
+        .padding(16)
+        .background(
+            RoundedRectangle(cornerRadius: 20)
+                .fill(AppColors.cardBackground)
+                .shadow(color: AppColors.cardShadow, radius: 16, x: 0, y: 8)
+                .shadow(color: AppColors.cardHighlight, radius: 1, x: 0, y: -1)
+        )
     }
 }
 

@@ -50,7 +50,7 @@ enum AppColors {
     static let background = Color(hex: "#0C0D0F")
 
     /// Card/input background color (darker than main)
-    static let cardBackground = Color(white: 0.07)
+    static let cardBackground = Color(hex: "#15181C")
 
     /// Button background color
     static let buttonBackground = Color(white: 0.18)
@@ -61,6 +61,10 @@ enum AppColors {
     /// Header add button colors
     static let addButtonBackground = Color(hex: "#45E06F")
     static let addButtonForeground = Color(hex: "#0C0D0F")
+
+    /// Card shadow colors
+    static let cardShadow = Color.black.opacity(0.55)
+    static let cardHighlight = Color.white.opacity(0.04)
 }
 
 /// Opacity values for habit color states
