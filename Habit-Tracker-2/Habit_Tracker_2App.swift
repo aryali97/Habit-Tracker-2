@@ -44,7 +44,7 @@ struct Habit_Tracker_2App: App {
         let oneMonthAgo = calendar.date(byAdding: .day, value: -30, to: today)!
         let sampleHabit = Habit(
             name: "Sample Habit",
-            emoji: "💪",
+            icon: "dumbbell",
             color: "#FF6B6B",
             createdAt: oneMonthAgo
         )
@@ -61,10 +61,10 @@ struct Habit_Tracker_2App: App {
         }
 
         // Add two more recent habits for comparison
-        let runHabit = Habit(name: "Morning Run", emoji: "🏃", color: "#51CF66")
+        let runHabit = Habit(name: "Morning Run", icon: "figure.run", color: "#51CF66")
         context.insert(runHabit)
 
-        let waterHabit = Habit(name: "Drink Water", emoji: "💧", color: "#339AF0", completionsPerDay: 8)
+        let waterHabit = Habit(name: "Drink Water", icon: "drop.fill", color: "#339AF0", completionsPerDay: 8)
         context.insert(waterHabit)
     }
 }

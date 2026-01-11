@@ -24,7 +24,7 @@ iOS 26+ habit tracking app with streak visualization and customizable goals.
 
 ### Habit Configuration
 Each habit has the following properties:
-- **Emoji**: User selects via system emoji keyboard
+- **Icon**: User selects from SF Symbols
 - **Name**: Required text field
 - **Description**: Optional text field
 - **Color**: Selected from preset color palette
@@ -40,7 +40,7 @@ Each habit has the following properties:
 - Scrollable list of habit cards
 - Add habit button (+) in navigation bar
 - Each card shows:
-  - Emoji icon (left side, with habit color background)
+  - Icon (left side, with habit color background)
   - Habit name
   - Completion button (right side)
   - Grid visualization below
@@ -83,7 +83,7 @@ When a streak goal is met, an outline appears in the habit's color:
 
 ### Edit Habit Sheet
 Presented as a sheet when adding or editing a habit:
-- Emoji picker button (opens system emoji keyboard)
+- Icon picker button (opens SF Symbols picker)
 - Name text field (required)
 - Description text field (optional)
 - Color picker (grid of preset colors)
@@ -105,7 +105,7 @@ Grid of preset colors for habit selection:
 - Dark theme background
 - Rounded corners on cards and buttons
 - Subtle shadows for depth
-- Habit color used throughout: emoji background, completion button, grid cells, streak outlines
+- Habit color used throughout: icon background, completion button, grid cells, streak outlines
 
 ### UX Examples
 Take a look at ~/Downloads/habit_tracker_example_images/ for examples of how the UX should look.
@@ -120,11 +120,11 @@ Take a look at ~/Downloads/habit_tracker_example_images/ for examples of how the
 ### Phase 2: Main List View
 - Scrollable habit card list
 - Add habit navigation button
-- Basic habit card layout (emoji, name, placeholder grid)
+- Basic habit card layout (icon, name, placeholder grid)
 
 ### Phase 3: Edit Habit Sheet
 - Form with all habit configuration fields
-- System emoji keyboard integration
+- SF Symbols icon picker integration
 - Color picker grid component
 - Streak goal configuration controls
 

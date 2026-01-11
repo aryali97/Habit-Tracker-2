@@ -98,7 +98,7 @@ struct PreviewContainer {
         let oneMonthAgo = calendar.date(byAdding: .day, value: -30, to: today)!
         let exerciseHabit = Habit(
             name: "Exercise",
-            emoji: "💪",
+            icon: "dumbbell",
             color: "#FF6B6B",
             createdAt: oneMonthAgo
         )
@@ -115,8 +115,8 @@ struct PreviewContainer {
         }
 
         let habits = [
-            Habit(name: "Morning Run", emoji: "🏃", color: "#51CF66"),
-            Habit(name: "Drink Water", emoji: "💧", color: "#339AF0", completionsPerDay: 8),
+            Habit(name: "Morning Run", icon: "figure.run", color: "#51CF66"),
+            Habit(name: "Drink Water", icon: "drop.fill", color: "#339AF0", completionsPerDay: 8),
         ]
         habits.forEach { container.mainContext.insert($0) }
 

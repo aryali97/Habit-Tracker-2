@@ -17,13 +17,14 @@ struct HabitCardView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            // Header row: emoji, name, completion button
+            // Header row: icon, name, completion button
             HStack {
-                // Emoji and name section (tappable for edit, has context menu)
+                // Icon and name section (tappable for edit, has context menu)
                 HStack {
-                    // Emoji with colored background (inactive color)
-                    Text(habit.emoji)
-                        .font(.title2)
+                    // Icon with colored background (inactive color)
+                    Image(systemName: habit.icon)
+                        .font(.system(size: 20, weight: .medium))
+                        .foregroundStyle(habitColor)
                         .frame(width: 44, height: 44)
                         .background(habitColor.opacity(HabitOpacity.inactive))
                         .clipShape(RoundedRectangle(cornerRadius: 10))
@@ -277,8 +278,9 @@ struct CompletionPickerSheet: View {
             VStack(spacing: 32) {
                 // Habit info
                 HStack {
-                    Text(habit.emoji)
-                        .font(.largeTitle)
+                    Image(systemName: habit.icon)
+                        .font(.system(size: 28, weight: .medium))
+                        .foregroundStyle(habitColor)
                         .frame(width: 64, height: 64)
                         .background(habitColor.opacity(HabitOpacity.inactive))
                         .clipShape(RoundedRectangle(cornerRadius: 14))
@@ -431,7 +433,7 @@ struct HabitCardPreview {
     static var oncePerDay: some View {
         let config = ModelConfiguration(isStoredInMemoryOnly: true)
         let container = try! ModelContainer(for: Habit.self, configurations: config)
-        let habit = Habit(name: "Morning Run", emoji: "🏃", color: "#51CF66")
+        let habit = Habit(name: "Morning Run", icon: "figure.run", color: "#51CF66")
         container.mainContext.insert(habit)
 
         return HabitCardView(habit: habit)
@@ -445,7 +447,7 @@ struct HabitCardPreview {
         let container = try! ModelContainer(for: Habit.self, configurations: config)
         let habit = Habit(
             name: "Drink Water",
-            emoji: "💧",
+            icon: "drop.fill",
             color: "#339AF0",
             completionsPerDay: 8
         )

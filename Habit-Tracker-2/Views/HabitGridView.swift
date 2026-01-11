@@ -173,7 +173,7 @@ struct DayCell: View {
 
     let habit = Habit(
         name: "Morning Run",
-        emoji: "🏃",
+        icon: "figure.run",
         color: "#51CF66",
         completionsPerDay: 1
     )
@@ -203,7 +203,7 @@ struct DayCell: View {
 
     let habit = Habit(
         name: "Drink Water",
-        emoji: "💧",
+        icon: "drop.fill",
         color: "#339AF0",
         completionsPerDay: 8
     )

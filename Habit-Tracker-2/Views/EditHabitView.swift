@@ -14,7 +14,7 @@ struct EditHabitView: View {
     let habitToEdit: Habit?
 
     // Form state
-    @State private var emoji: String = "⭐️"
+    @State private var icon: String = HabitIcons.defaultIcon
     @State private var name: String = ""
     @State private var habitDescription: String = ""
     @State private var selectedColor: String = HabitColors.default
@@ -23,9 +23,8 @@ struct EditHabitView: View {
     @State private var streakGoalPeriod: StreakPeriod = .day
     @State private var streakGoalType: StreakGoalType = .dayBasis
 
-    // Emoji picker state
-    @State private var showEmojiPicker = false
-    @FocusState private var isEmojiFieldFocused: Bool
+    // Icon picker state
+    @State private var showIconPicker = false
 
     private var isFormValid: Bool {
         !name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
@@ -43,8 +42,10 @@ struct EditHabitView: View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: 24) {
-                    // Emoji Picker
-                    EmojiPickerButton(emoji: $emoji)
+                    // Icon Picker Button
+                    IconPickerButton(icon: $icon, color: selectedColor) {
+                        showIconPicker = true
+                    }
 
                     // Name field
                     VStack(alignment: .leading, spacing: 8) {
@@ -201,11 +202,14 @@ struct EditHabitView: View {
         .onAppear {
             loadExistingHabit()
         }
+        .sheet(isPresented: $showIconPicker) {
+            IconPickerView(selectedIcon: $icon)
+        }
     }
 
     private func loadExistingHabit() {
         guard let habit = habitToEdit else { return }
-        emoji = habit.emoji
+        icon = habit.icon
         name = habit.name
         habitDescription = habit.habitDescription ?? ""
         selectedColor = habit.color
@@ -218,7 +222,7 @@ struct EditHabitView: View {
     private func saveHabit() {
         if let habit = habitToEdit {
             // Update existing habit
-            habit.emoji = emoji
+            habit.icon = icon
             habit.name = name.trimmingCharacters(in: .whitespacesAndNewlines)
             habit.habitDescription = habitDescription.isEmpty ? nil : habitDescription
             habit.color = selectedColor
@@ -231,7 +235,7 @@ struct EditHabitView: View {
             let habit = Habit(
                 name: name.trimmingCharacters(in: .whitespacesAndNewlines),
                 habitDescription: habitDescription.isEmpty ? nil : habitDescription,
-                emoji: emoji,
+                icon: icon,
                 color: selectedColor,
                 completionsPerDay: completionsPerDay,
                 streakGoalValue: streakGoalValue,
@@ -245,41 +249,21 @@ struct EditHabitView: View {
     }
 }
 
-// MARK: - Emoji Picker Button
+// MARK: - Icon Picker Button
 
-struct EmojiPickerButton: View {
-    @Binding var emoji: String
-    @State private var emojiInput: String = ""
-    @FocusState private var isFocused: Bool
+struct IconPickerButton: View {
+    @Binding var icon: String
+    let color: String
+    let onTap: () -> Void
 
     var body: some View {
-        ZStack {
-            // Hidden text field for emoji keyboard
-            TextField("", text: $emojiInput)
-                .keyboardType(.default)
-                .focused($isFocused)
-                .opacity(0)
-                .frame(width: 0, height: 0)
-                .onChange(of: emojiInput) { oldValue, newValue in
-                    // Extract only emoji characters
-                    let emojis = newValue.filter { $0.isEmoji }
-                    if let lastEmoji = emojis.last {
-                        emoji = String(lastEmoji)
-                        emojiInput = ""
-                        isFocused = false
-                    }
-                }
-
-            // Visible button
-            Button {
-                isFocused = true
-            } label: {
-                Text(emoji)
-                    .font(.system(size: 48))
-                    .frame(width: 88, height: 88)
-                    .background(AppColors.cardBackground)
-                    .clipShape(Circle())
-            }
+        Button(action: onTap) {
+            Image(systemName: icon)
+                .font(.system(size: 40))
+                .foregroundStyle(Color(hex: color))
+                .frame(width: 88, height: 88)
+                .background(AppColors.cardBackground)
+                .clipShape(Circle())
         }
     }
 }
@@ -324,15 +308,6 @@ struct ColorCircle: View {
     }
 }
 
-// MARK: - Character Extension
-
-extension Character {
-    var isEmoji: Bool {
-        guard let scalar = unicodeScalars.first else { return false }
-        return scalar.properties.isEmoji && (scalar.value > 0x238C || unicodeScalars.count > 1)
-    }
-}
-
 // MARK: - Previews
 
 #Preview("New Habit") {
@@ -346,7 +321,7 @@ extension Character {
     let habit = Habit(
         name: "Morning Run",
         habitDescription: "Run every morning",
-        emoji: "🏃",
+        icon: "figure.run",
         color: "#51CF66",
         completionsPerDay: 1,
         streakGoalValue: 5,

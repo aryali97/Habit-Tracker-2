@@ -21,7 +21,7 @@ final class Habit: Identifiable {
     var id: UUID
     var name: String
     var habitDescription: String?
-    var emoji: String
+    var icon: String  // SF Symbol name (e.g., "star.fill")
     var color: String
     var completionsPerDay: Int
     var streakGoalValue: Int
@@ -35,7 +35,7 @@ final class Habit: Identifiable {
     init(
         name: String,
         habitDescription: String? = nil,
-        emoji: String = "⭐️",
+        icon: String = "star.fill",
         color: String = "#5C7CFA",
         completionsPerDay: Int = 1,
         streakGoalValue: Int = 1,
@@ -46,7 +46,7 @@ final class Habit: Identifiable {
         self.id = UUID()
         self.name = name
         self.habitDescription = habitDescription
-        self.emoji = emoji
+        self.icon = icon
         self.color = color
         self.completionsPerDay = max(1, completionsPerDay)
         self.streakGoalValue = max(1, streakGoalValue)
