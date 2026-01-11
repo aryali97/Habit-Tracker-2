@@ -9,7 +9,7 @@ import SwiftData
 struct HabitGridView: View {
     let habit: Habit
 
-    private let cellSize: CGFloat = 10
+    private let cellSize: CGFloat = 8
     private let cellSpacing: CGFloat = 2
     private let numberOfWeeks = 52
     private let daysInWeek = 7
@@ -50,19 +50,28 @@ struct HabitGridView: View {
     var body: some View {
         ScrollViewReader { proxy in
             ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: cellSpacing) {
-                    ForEach(0..<numberOfWeeks, id: \.self) { weekIndex in
-                        WeekColumn(
-                            weekIndex: weekIndex,
-                            gridStartDate: gridStartDate,
-                            completionsByDate: completionsByDate,
-                            completionsPerDay: habit.completionsPerDay,
-                            habitColor: habitColor,
-                            habitCreatedAt: habitCreatedAt,
-                            cellSize: cellSize,
-                            cellSpacing: cellSpacing
-                        )
-                        .id(weekIndex)
+                VStack(alignment: .leading, spacing: 6) {
+                    MonthHeaderView(
+                        gridStartDate: gridStartDate,
+                        numberOfWeeks: numberOfWeeks,
+                        cellSize: cellSize,
+                        cellSpacing: cellSpacing
+                    )
+
+                    HStack(spacing: cellSpacing) {
+                        ForEach(0..<numberOfWeeks, id: \.self) { weekIndex in
+                            WeekColumn(
+                                weekIndex: weekIndex,
+                                gridStartDate: gridStartDate,
+                                completionsByDate: completionsByDate,
+                                completionsPerDay: habit.completionsPerDay,
+                                habitColor: habitColor,
+                                habitCreatedAt: habitCreatedAt,
+                                cellSize: cellSize,
+                                cellSpacing: cellSpacing
+                            )
+                            .id(weekIndex)
+                        }
                     }
                 }
                 .padding(.horizontal, 4)
@@ -72,6 +81,60 @@ struct HabitGridView: View {
                 proxy.scrollTo(numberOfWeeks - 1, anchor: .trailing)
             }
         }
+    }
+}
+
+// MARK: - Month Header
+
+struct MonthHeaderView: View {
+    let gridStartDate: Date
+    let numberOfWeeks: Int
+    let cellSize: CGFloat
+    let cellSpacing: CGFloat
+
+    private var gridEndDate: Date {
+        let totalDays = (numberOfWeeks * 7) - 1
+        return Calendar.current.date(byAdding: .day, value: totalDays, to: gridStartDate)!
+    }
+
+    private var monthLabels: [(index: Int, label: String)] {
+        let calendar = Calendar.current
+        let formatter = DateFormatter()
+        formatter.dateFormat = "MMM"
+        formatter.locale = Locale.current
+
+        var labels: [(Int, String)] = []
+        let startOfMonth = calendar.date(from: calendar.dateComponents([.year, .month], from: gridStartDate))!
+        var current = startOfMonth
+        if current < gridStartDate {
+            current = calendar.date(byAdding: .month, value: 1, to: current)!
+        }
+
+        while current <= gridEndDate {
+            let dayOffset = calendar.dateComponents([.day], from: gridStartDate, to: current).day ?? 0
+            let weekIndex = min(max(dayOffset / 7, 0), numberOfWeeks - 1)
+            let label = formatter.string(from: current).uppercased()
+            labels.append((weekIndex, label))
+            current = calendar.date(byAdding: .month, value: 1, to: current)!
+        }
+
+        return labels
+    }
+
+    var body: some View {
+        let columnWidth = cellSize + cellSpacing
+        let gridWidth = (CGFloat(numberOfWeeks - 1) * columnWidth) + cellSize
+
+        ZStack(alignment: .topLeading) {
+            ForEach(monthLabels, id: \.index) { item in
+                Text(item.label)
+                    .font(.system(size: 11, weight: .semibold))
+                    .foregroundStyle(Color.white.opacity(0.45))
+                    .fixedSize()
+                    .position(x: (CGFloat(item.index) * columnWidth) + (cellSize / 2), y: 6)
+            }
+        }
+        .frame(width: gridWidth, height: 16, alignment: .leading)
     }
 }
 
@@ -159,7 +222,7 @@ struct DayCell: View {
     }
 
     var body: some View {
-        RoundedRectangle(cornerRadius: 2.5)
+        RoundedRectangle(cornerRadius: 2)
             .fill(color.opacity(opacity))
             .frame(width: size, height: size)
     }
