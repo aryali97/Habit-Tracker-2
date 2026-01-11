@@ -59,7 +59,7 @@ enum AppColors {
 /// Opacity values for habit color states
 enum HabitOpacity {
     /// Inactive state: before habit creation, future days, unchecked buttons
-    static let inactive: Double = 0.15
+    static let inactive: Double = 0.1
 
     /// Failed state: days within tracking period with no completions
     static let failed: Double = 0.25

@@ -200,9 +200,13 @@ struct SegmentedProgressButton: View {
     private let size: CGFloat = 44
     private let lineWidth: CGFloat = 3
     private let gapDegrees: Double = 6
+    private let cornerRadius: CGFloat = 10
+    private let arcInset: CGFloat = 4
 
     var body: some View {
         ZStack {
+            RoundedRectangle(cornerRadius: cornerRadius)
+                .fill(color.opacity(HabitOpacity.inactive))
             // Background segments
             ForEach(0..<goal, id: \.self) { index in
                 segmentArc(index: index, filled: false)
@@ -218,10 +222,10 @@ struct SegmentedProgressButton: View {
             // Plus icon
             Image(systemName: "plus")
                 .font(.system(size: 14, weight: .bold))
-                .foregroundStyle(isComplete ? color : color.opacity(HabitOpacity.failed))
+                .foregroundStyle(.white)
         }
         .frame(width: size, height: size)
-        .contentShape(Circle())
+        .contentShape(RoundedRectangle(cornerRadius: cornerRadius))
         .onTapGesture {
             onTap()
         }
@@ -243,7 +247,7 @@ struct SegmentedProgressButton: View {
         return Path { path in
             path.addArc(
                 center: CGPoint(x: size / 2, y: size / 2),
-                radius: (size - lineWidth) / 2,
+                radius: ((size - lineWidth) / 2) - arcInset,
                 startAngle: .degrees(startAngle),
                 endAngle: .degrees(endAngle),
                 clockwise: false
