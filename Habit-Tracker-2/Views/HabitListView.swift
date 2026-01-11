@@ -17,24 +17,11 @@ struct HabitListView: View {
             ScrollView {
                 LazyVStack(spacing: 16) {
                     ForEach(habits) { habit in
-                        HabitCardView(habit: habit)
-                            .contentShape(Rectangle())
-                            .onTapGesture {
-                                habitToEdit = habit
-                            }
-                            .contextMenu {
-                                Button {
-                                    habitToEdit = habit
-                                } label: {
-                                    Label("Edit", systemImage: "pencil")
-                                }
-
-                                Button(role: .destructive) {
-                                    deleteHabit(habit)
-                                } label: {
-                                    Label("Delete", systemImage: "trash")
-                                }
-                            }
+                        HabitCardView(
+                            habit: habit,
+                            onEdit: { habitToEdit = habit },
+                            onDelete: { deleteHabit(habit) }
+                        )
                     }
                 }
                 .padding()
