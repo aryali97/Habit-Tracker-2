@@ -6,14 +6,32 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXContainerItemProxy section */
+		85BCBEAB2F131111003626E8 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 85BCBE4B2F1308B3003626E8 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 85BCBE522F1308B3003626E8;
+			remoteInfo = "Habit-Tracker-2";
+		};
+/* End PBXContainerItemProxy section */
+
 /* Begin PBXFileReference section */
 		85BCBE532F1308B3003626E8 /* Habit-Tracker-2.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Habit-Tracker-2.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		85BCBEA22F131111003626E8 /* Habit-Tracker-2Tests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "Habit-Tracker-2Tests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
+		85DD7E492F1479A800B75364 /* Habit-Tracker-2Tests */ = {isa = PBXFileReference; lastKnownFileType = folder; path = "Habit-Tracker-2Tests"; sourceTree = "<group>"; };
+		85DD7E6B2F147B5B00B75364 /* Habit-Tracker-2.xctestplan */ = {isa = PBXFileReference; lastKnownFileType = text; path = "Habit-Tracker-2.xctestplan"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		85BCBE552F1308B3003626E8 /* Habit-Tracker-2 */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = "Habit-Tracker-2";
+			sourceTree = "<group>";
+		};
+		85BCBEA92F131111003626E8 /* Habit-Tracker-2Tests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = "Habit-Tracker-2Tests";
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -26,13 +44,23 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		85BCBEA42F131111003626E8 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
 		85BCBE4A2F1308B3003626E8 = {
 			isa = PBXGroup;
 			children = (
+				85DD7E6B2F147B5B00B75364 /* Habit-Tracker-2.xctestplan */,
+				85DD7E492F1479A800B75364 /* Habit-Tracker-2Tests */,
 				85BCBE552F1308B3003626E8 /* Habit-Tracker-2 */,
+				85BCBEA92F131111003626E8 /* Habit-Tracker-2Tests */,
 				85BCBE542F1308B3003626E8 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -41,6 +69,7 @@
 			isa = PBXGroup;
 			children = (
 				85BCBE532F1308B3003626E8 /* Habit-Tracker-2.app */,
+				85BCBEA22F131111003626E8 /* Habit-Tracker-2Tests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -70,6 +99,29 @@
 			productReference = 85BCBE532F1308B3003626E8 /* Habit-Tracker-2.app */;
 			productType = "com.apple.product-type.application";
 		};
+		85BCBEA12F131111003626E8 /* Habit-Tracker-2Tests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 85BCBEA62F131111003626E8 /* Build configuration list for PBXNativeTarget "Habit-Tracker-2Tests" */;
+			buildPhases = (
+				85BCBEA32F131111003626E8 /* Sources */,
+				85BCBEA42F131111003626E8 /* Frameworks */,
+				85BCBEA52F131111003626E8 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				85BCBEAA2F131111003626E8 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				85BCBEA92F131111003626E8 /* Habit-Tracker-2Tests */,
+			);
+			name = "Habit-Tracker-2Tests";
+			packageProductDependencies = (
+			);
+			productName = "Habit-Tracker-2Tests";
+			productReference = 85BCBEA22F131111003626E8 /* Habit-Tracker-2Tests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -82,6 +134,10 @@
 				TargetAttributes = {
 					85BCBE522F1308B3003626E8 = {
 						CreatedOnToolsVersion = 26.1.1;
+					};
+					85BCBEA12F131111003626E8 = {
+						CreatedOnToolsVersion = 26.1.1;
+						TestTargetID = 85BCBE522F1308B3003626E8;
 					};
 				};
 			};
@@ -100,12 +156,20 @@
 			projectRoot = "";
 			targets = (
 				85BCBE522F1308B3003626E8 /* Habit-Tracker-2 */,
+				85BCBEA12F131111003626E8 /* Habit-Tracker-2Tests */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
 		85BCBE512F1308B3003626E8 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		85BCBEA52F131111003626E8 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -122,7 +186,22 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		85BCBEA32F131111003626E8 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		85BCBEAA2F131111003626E8 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 85BCBE522F1308B3003626E8 /* Habit-Tracker-2 */;
+			targetProxy = 85BCBEAB2F131111003626E8 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		85BCBE5C2F1308B4003626E8 /* Debug */ = {
@@ -310,6 +389,49 @@
 			};
 			name = Release;
 		};
+		85BCBEA72F131111003626E8 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = 389W483GVX;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = "$(PRODUCT_NAME)";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = "com.aniryali.Habit-Tracker-2Tests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Habit-Tracker-2.app/Habit-Tracker-2";
+			};
+			name = Debug;
+		};
+		85BCBEA82F131111003626E8 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = 389W483GVX;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = "$(PRODUCT_NAME)";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = "com.aniryali.Habit-Tracker-2Tests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Habit-Tracker-2.app/Habit-Tracker-2";
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -327,6 +449,15 @@
 			buildConfigurations = (
 				85BCBE5F2F1308B4003626E8 /* Debug */,
 				85BCBE602F1308B4003626E8 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		85BCBEA62F131111003626E8 /* Build configuration list for PBXNativeTarget "Habit-Tracker-2Tests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				85BCBEA72F131111003626E8 /* Debug */,
+				85BCBEA82F131111003626E8 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

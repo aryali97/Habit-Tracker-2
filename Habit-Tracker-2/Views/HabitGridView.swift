@@ -52,8 +52,20 @@ struct HabitGridView: View {
         return dict
     }
 
+    private var goalEvaluator: GoalIndicatorEvaluator {
+        GoalIndicatorEvaluator(
+            habitCreatedAt: habitCreatedAt,
+            completionsByDate: completionsByDate,
+            completionsPerDay: habit.completionsPerDay,
+            streakGoalPeriod: habit.streakGoalPeriod,
+            streakGoalValue: habit.streakGoalValue,
+            streakGoalType: habit.streakGoalType,
+            gridStartDate: gridStartDate,
+            daysInWeek: daysInWeek
+        )
+    }
+
     private var monthlyGoalMetDates: Set<Date> {
-        guard habit.streakGoalPeriod == .month else { return [] }
         let calendar = Calendar.current
         var metMonths: Set<Date> = []
 
@@ -63,7 +75,7 @@ struct HabitGridView: View {
         }
 
         while current <= gridEndDate {
-            if monthMeetsGoal(monthStart: current) {
+            if goalEvaluator.monthQualifies(monthStart: current) {
                 metMonths.insert(current)
             }
             current = calendar.date(byAdding: .month, value: 1, to: current)!
@@ -82,21 +94,18 @@ struct HabitGridView: View {
                         cellSize: cellSize,
                         cellSpacing: cellSpacing,
                         habitColor: habitColor,
-                        highlightMonthlyGoals: habit.streakGoalPeriod == .month,
                         monthlyGoalMetDates: monthlyGoalMetDates
                     )
 
-                    if habit.streakGoalPeriod == .week {
-                        WeekGoalBarRow(
-                            numberOfWeeks: numberOfWeeks,
-                            cellSize: cellSize,
-                            cellSpacing: cellSpacing,
-                            habitColor: habitColor,
-                            meetsGoalForWeek: { weekIndex in
-                                weekMeetsGoal(weekIndex: weekIndex)
-                            }
-                        )
-                    }
+                    WeekGoalBarRow(
+                        numberOfWeeks: numberOfWeeks,
+                        cellSize: cellSize,
+                        cellSpacing: cellSpacing,
+                        habitColor: habitColor,
+                        meetsGoalForWeek: { weekIndex in
+                            goalEvaluator.weekQualifies(weekIndex: weekIndex)
+                        }
+                    )
 
                     HStack(spacing: cellSpacing) {
                         ForEach(0..<numberOfWeeks, id: \.self) { weekIndex in
@@ -123,44 +132,6 @@ struct HabitGridView: View {
         }
     }
 
-    private func weekMeetsGoal(weekIndex: Int) -> Bool {
-        let calendar = Calendar.current
-        let weekStart = calendar.date(byAdding: .day, value: weekIndex * daysInWeek, to: gridStartDate)!
-        let totals = periodTotals(startDate: weekStart, lengthInDays: daysInWeek)
-        return totals.meetsGoal(streakGoalValue: habit.streakGoalValue, streakGoalType: habit.streakGoalType)
-    }
-
-    private func monthMeetsGoal(monthStart: Date) -> Bool {
-        let calendar = Calendar.current
-        guard let dayRange = calendar.range(of: .day, in: .month, for: monthStart) else {
-            return false
-        }
-        let totals = periodTotals(startDate: monthStart, lengthInDays: dayRange.count)
-        return totals.meetsGoal(streakGoalValue: habit.streakGoalValue, streakGoalType: habit.streakGoalType)
-    }
-
-    private func periodTotals(startDate: Date, lengthInDays: Int) -> PeriodTotals {
-        let calendar = Calendar.current
-        let today = calendar.startOfDay(for: Date())
-        var dayCount = 0
-        var valueCount = 0
-
-        for offset in 0..<lengthInDays {
-            guard let date = calendar.date(byAdding: .day, value: offset, to: startDate) else {
-                continue
-            }
-            if date < habitCreatedAt || date > today {
-                continue
-            }
-            let count = completionsByDate[date] ?? 0
-            if count > 0 {
-                dayCount += 1
-            }
-            valueCount += count
-        }
-
-        return PeriodTotals(dayCount: dayCount, valueCount: valueCount)
-    }
 }
 
 // MARK: - Month Header
@@ -171,7 +142,6 @@ struct MonthHeaderView: View {
     let cellSize: CGFloat
     let cellSpacing: CGFloat
     let habitColor: Color
-    let highlightMonthlyGoals: Bool
     let monthlyGoalMetDates: Set<Date>
 
     private var gridEndDate: Date {
@@ -212,7 +182,7 @@ struct MonthHeaderView: View {
                 Text(item.label)
                     .font(.system(size: 11, weight: .semibold))
                     .foregroundStyle(
-                        highlightMonthlyGoals && monthlyGoalMetDates.contains(item.monthStart)
+                        monthlyGoalMetDates.contains(item.monthStart)
                             ? habitColor
                             : Color.white.opacity(0.45)
                     )
@@ -363,19 +333,43 @@ struct DayCell: View {
         name: "Morning Run",
         icon: "figure.run",
         color: "#51CF66",
-        completionsPerDay: 1
+        completionsPerDay: 1,
+        streakGoalValue: 1,
+        streakGoalType: .dayBasis
     )
     container.mainContext.insert(habit)
 
     // Add some sample completions
     let calendar = Calendar.current
     let today = Date()
+    var addedDates: Set<Date> = []
 
     for dayOffset in [0, -1, -2, -3, -5, -7, -8, -10, -14, -15, -16] {
         if let date = calendar.date(byAdding: .day, value: dayOffset, to: today) {
+            let dateKey = calendar.startOfDay(for: date)
+            if addedDates.contains(dateKey) {
+                continue
+            }
             let completion = HabitCompletion(date: date, count: 1)
             completion.habit = habit
             container.mainContext.insert(completion)
+            addedDates.insert(dateKey)
+        }
+    }
+
+    if let monthStart = calendar.date(from: calendar.dateComponents([.year, .month], from: today)),
+       let monthDayRange = calendar.range(of: .day, in: .month, for: monthStart),
+       let monthEnd = calendar.date(byAdding: .day, value: monthDayRange.count - 1, to: monthStart),
+       var weekStart = calendar.dateInterval(of: .weekOfYear, for: monthStart)?.start {
+        while weekStart <= monthEnd {
+            let dateKey = calendar.startOfDay(for: weekStart)
+            if !addedDates.contains(dateKey) {
+                let completion = HabitCompletion(date: weekStart, count: 1)
+                completion.habit = habit
+                container.mainContext.insert(completion)
+                addedDates.insert(dateKey)
+            }
+            weekStart = calendar.date(byAdding: .weekOfYear, value: 1, to: weekStart)!
         }
     }
 

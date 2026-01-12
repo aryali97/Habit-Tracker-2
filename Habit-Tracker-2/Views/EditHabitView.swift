@@ -119,9 +119,9 @@ struct EditHabitView: View {
                             .foregroundStyle(.secondary)
                     }
 
-                    // Streak Goal
+                    // Goal
                     VStack(alignment: .leading, spacing: 8) {
-                        Text("Streak Goal")
+                        Text("Goal")
                             .font(.subheadline)
                             .foregroundStyle(.secondary)
 

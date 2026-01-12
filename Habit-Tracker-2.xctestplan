@@ -1,0 +1,24 @@
+{
+  "configurations" : [
+    {
+      "id" : "FC9C6808-D711-4CBD-8A52-9F8C155FDA90",
+      "name" : "Configuration 1",
+      "options" : {
+
+      }
+    }
+  ],
+  "defaultOptions" : {
+
+  },
+  "testTargets" : [
+    {
+      "target" : {
+        "containerPath" : "container:Habit-Tracker-2.xcodeproj",
+        "identifier" : "85BCBEA12F131111003626E8",
+        "name" : "Habit-Tracker-2Tests"
+      }
+    }
+  ],
+  "version" : 1
+}
