@@ -25,17 +25,17 @@ iOS 26+ habit tracking app with streak visualization and customizable goals.
 - If simulator visuals don’t match device, reinstall using the `./DerivedData` app path and re-run UI automation before concluding
 - For verification runs, always `clean` then `build_sim` with `derivedDataPath ./DerivedData`, then reinstall from the `./DerivedData` app path to ensure a fresh build is being exercised
 
-## Product Requirements
+## Product Overview
 
 ### Habit Configuration
-Each habit has the following properties:
-- **Icon**: User selects from SF Symbols
-- **Name**: Required text field
-- **Description**: Optional text field
-- **Color**: Selected from preset color palette
+Each habit supports:
+- **Icon**: SF Symbols selection
+- **Name**: Required text
+- **Description**: Optional text
+- **Color**: Selected from a preset palette
 - **Completions per day**: 1 for once-daily habits, or higher for multi-completion habits
-- **Streak goal**: Configurable goal with:
-  - **Period**: Day or Week (no monthly goals)
+- **Goal**: Configurable target with:
+  - **Period**: Day / Week / Month
   - **Value**: Target number
   - **Type**: Day basis or Value basis
     - Day basis: "Complete on X days this period"
@@ -73,18 +73,17 @@ Each habit has the following properties:
   - Partial completion: medium intensity
   - Full completion (count >= completionsPerDay): full color intensity
 
-### Streak Outlines
-When a streak goal is met, an outline appears in the habit's color:
+### Goal Indicators
+Goal indicators summarize progress without outlines:
 
-**Daily Streak Goals**:
-- Outline around consecutive days that meet the daily completion goal
-- Example: "3 day streak" shows outline around 3+ consecutive completed days
+- **Week completion bar**: A thin habit-colored bar above a week column when either:
+  - A weekly goal is configured and met for that week, or
+  - Every active day in that week is completed (dates before habit creation are ignored; future dates count and must be completed).
 
-**Weekly Streak Goals**:
-- Column outline wraps around the entire week that meets the goal
-- Goal evaluation based on streak goal type:
-  - Day basis: Count days with at least 1 completion
-  - Value basis: Sum all completion counts for the week
+- **Month label highlight**: The month text is tinted with the habit color when any of these are true:
+  - A monthly goal is configured and met,
+  - A daily goal is configured and every active day in the month is completed (dates before habit creation are ignored; future dates count),
+  - A weekly goal is configured and every overlapping week segment in the month meets the weekly goal (partial weeks at the start/end of the month are evaluated against their in-month segment; dates before habit creation are ignored; future dates count).
 
 ### Edit Habit Sheet
 Presented as a sheet when adding or editing a habit:
@@ -93,9 +92,9 @@ Presented as a sheet when adding or editing a habit:
 - Description text field (optional)
 - Color picker (grid of preset colors)
 - Completions per day (stepper, minimum 1)
-- Streak goal section:
+- Goal section:
   - Goal value (stepper)
-  - Goal period (picker: Day / Week)
+  - Goal period (picker: Day / Week / Month)
   - Goal type (segmented control: Day Basis / Value Basis)
 - Save button
 - Cancel/close button
@@ -103,48 +102,13 @@ Presented as a sheet when adding or editing a habit:
 ### Color Palette
 Grid of preset colors for habit selection:
 - Row 1 (warm): Coral red, Orange, Yellow, Light yellow, Lime, Green, Teal
-- Row 2 (cool): Cyan, Blue, Indigo, Purple, Magenta, Pink
-- Row 3 (neutral): Gray, Light gray
+- Row 2 (cool): Cyan, Blue, Indigo, Purple, Magenta, Pink, Gray
 
 ### Visual Style
 - Dark theme background
 - Rounded corners on cards and buttons
 - Subtle shadows for depth
-- Habit color used throughout: icon background, completion button, grid cells, streak outlines
+- Habit color used throughout: icon background, completion button, grid cells, goal indicators
 
 ### UX Examples
 Take a look at ~/Downloads/habit_tracker_example_images/ for examples of how the UX should look.
-
-## Development Phases
-
-### Phase 1: Data Layer
-- SwiftData models for habits and completions
-- ModelContainer configuration
-- Basic CRUD operations
-
-### Phase 2: Main List View
-- Scrollable habit card list
-- Add habit navigation button
-- Basic habit card layout (icon, name, placeholder grid)
-
-### Phase 3: Edit Habit Sheet
-- Form with all habit configuration fields
-- SF Symbols icon picker integration
-- Color picker grid component
-- Streak goal configuration controls
-
-### Phase 4: Completion Tracking
-- Checkmark button for once-daily habits
-- Progress ring button for multi-completion habits
-- Tap and long-press interactions
-
-### Phase 5: Grid Visualization
-- 7x52 grid layout (Sun-Sat rows, week columns)
-- Horizontal scrolling with momentum
-- Color intensity based on completion state
-- Auto-scroll to current week on appear
-
-### Phase 6: Streak Outlines
-- Streak calculation logic for day/week periods
-- Day cell outline modifier for daily streaks
-- Week column outline for weekly streaks
