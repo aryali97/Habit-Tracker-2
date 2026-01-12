@@ -38,7 +38,7 @@ struct HabitColors {
         // Row 2 - Cool
         "#22B8CF", "#339AF0", "#5C7CFA", "#7950F2", "#BE4BDB", "#F06595",
         // Row 3 - Neutral
-        "#868E96", "#ADB5BD"
+        "#868E96"
     ]
 
     static var `default`: String { "#5C7CFA" }

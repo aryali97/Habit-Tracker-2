@@ -10,6 +10,7 @@ struct HabitCardView: View {
     let habit: Habit
     var onEdit: (() -> Void)? = nil
     var onDelete: (() -> Void)? = nil
+    var onReorder: (() -> Void)? = nil
     @GestureState private var isHeaderPressed = false
 
     private var habitColor: Color {
@@ -20,15 +21,20 @@ struct HabitCardView: View {
         VStack(alignment: .leading, spacing: 12) {
             // Header row: icon, name, completion button
             HStack(alignment: .center, spacing: 12) {
-                // Icon and name section (tappable for edit, has context menu)
+                // Icon and name section (icon tap edits, long-press menu on row)
                 HStack(spacing: 12) {
-                    // Icon with colored background (inactive color)
-                    Image(systemName: habit.icon)
-                        .font(.system(size: 20, weight: .medium))
-                        .foregroundStyle(habitColor)
-                        .frame(width: 44, height: 44)
-                        .background(habitColor.opacity(HabitOpacity.inactive))
-                        .clipShape(Circle())
+                    Button {
+                        Haptics.impact(.light)
+                        onEdit?()
+                    } label: {
+                        Image(systemName: habit.icon)
+                            .font(.system(size: 20, weight: .medium))
+                            .foregroundStyle(habitColor)
+                            .frame(width: 44, height: 44)
+                            .background(habitColor.opacity(HabitOpacity.inactive))
+                            .clipShape(Circle())
+                    }
+                    .buttonStyle(PressScaleButtonStyle())
 
                     Text(habit.name)
                         .font(.system(size: 17, weight: .medium))
@@ -37,10 +43,6 @@ struct HabitCardView: View {
                     Spacer()
                 }
                 .contentShape(Rectangle())
-                .onTapGesture {
-                    Haptics.impact(.light)
-                    onEdit?()
-                }
                 .scaleEffect(isHeaderPressed ? 0.98 : 1)
                 .animation(.easeOut(duration: 0.12), value: isHeaderPressed)
                 .simultaneousGesture(
@@ -50,6 +52,15 @@ struct HabitCardView: View {
                         }
                 )
                 .contextMenu {
+                    if let onReorder = onReorder {
+                        Button {
+                            Haptics.impact(.light)
+                            onReorder()
+                        } label: {
+                            Label("Reorder", systemImage: "arrow.up.arrow.down")
+                        }
+                    }
+
                     if let onEdit = onEdit {
                         Button {
                             Haptics.impact(.light)

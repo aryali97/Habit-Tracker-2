@@ -9,8 +9,10 @@ import SwiftData
 struct HabitListView: View {
     @Environment(\.modelContext) private var modelContext
     @Query(sort: \Habit.createdAt) private var habits: [Habit]
+    @Query(sort: \HabitOrder.orderIndex) private var habitOrders: [HabitOrder]
     @State private var showingAddHabit = false
     @State private var habitToEdit: Habit?
+    @State private var showingReorder = false
 
     private let dateFormatter: DateFormatter = {
         let formatter = DateFormatter()
@@ -54,18 +56,19 @@ struct HabitListView: View {
 
                 ScrollView {
                     LazyVStack(spacing: 16) {
-                        ForEach(habits) { habit in
+                        ForEach(orderedHabits) { habit in
                             HabitCardView(
                                 habit: habit,
                                 onEdit: { habitToEdit = habit },
-                                onDelete: { deleteHabit(habit) }
+                                onDelete: { deleteHabit(habit) },
+                                onReorder: { showingReorder = true }
                             )
                             .transition(.move(edge: .top).combined(with: .opacity))
                         }
                     }
                     .padding(.horizontal)
                     .padding(.bottom)
-                    .animation(.snappy, value: habits.map(\.id))
+                    .animation(.snappy, value: orderedHabits.map(\.id))
                 }
             }
             .background(AppColors.background)
@@ -76,14 +79,67 @@ struct HabitListView: View {
             .sheet(item: $habitToEdit) { habit in
                 EditHabitView(habit: habit)
             }
+            .sheet(isPresented: $showingReorder) {
+                ReorderHabitsSheet(habits: orderedHabits)
+            }
         }
         .preferredColorScheme(.dark)
+        .onAppear { ensureHabitOrder() }
+        .onChange(of: habits.count) { _, _ in
+            ensureHabitOrder()
+        }
     }
 
     private func deleteHabit(_ habit: Habit) {
         Haptics.impact(.rigid)
         withAnimation(.snappy) {
+            if let order = habitOrders.first(where: { $0.habit.id == habit.id }) {
+                modelContext.delete(order)
+            }
             modelContext.delete(habit)
+        }
+    }
+
+    private var orderedHabits: [Habit] {
+        let orderLookup = Dictionary(uniqueKeysWithValues: habitOrders.map { ($0.habit.id, $0.orderIndex) })
+        return habits.sorted {
+            let leftOrder = orderLookup[$0.id] ?? Int.max
+            let rightOrder = orderLookup[$1.id] ?? Int.max
+            if leftOrder != rightOrder {
+                return leftOrder < rightOrder
+            }
+            return $0.createdAt < $1.createdAt
+        }
+    }
+
+    private func ensureHabitOrder() {
+        guard !habits.isEmpty else { return }
+
+        let orderById = Dictionary(uniqueKeysWithValues: habitOrders.map { ($0.habit.id, $0) })
+        let sortedHabits = habits.sorted {
+            let leftOrder = orderById[$0.id]?.orderIndex ?? Int.max
+            let rightOrder = orderById[$1.id]?.orderIndex ?? Int.max
+            if leftOrder != rightOrder {
+                return leftOrder < rightOrder
+            }
+            return $0.createdAt < $1.createdAt
+        }
+
+        var nextIndex = 0
+        for habit in sortedHabits {
+            if let order = orderById[habit.id] {
+                order.orderIndex = nextIndex
+            } else {
+                let order = HabitOrder(habit: habit, orderIndex: nextIndex)
+                modelContext.insert(order)
+            }
+            nextIndex += 1
+        }
+
+        do {
+            try modelContext.save()
+        } catch {
+            assertionFailure("Failed to save habit order: \(error)")
         }
     }
 }
@@ -103,13 +159,23 @@ struct HabitListView: View {
 struct PreviewContainer {
     static var empty: ModelContainer {
         let config = ModelConfiguration(isStoredInMemoryOnly: true)
-        let container = try! ModelContainer(for: Habit.self, configurations: config)
+        let container = try! ModelContainer(
+            for: Habit.self,
+            HabitCompletion.self,
+            HabitOrder.self,
+            configurations: config
+        )
         return container
     }
 
     static var withSampleHabits: ModelContainer {
         let config = ModelConfiguration(isStoredInMemoryOnly: true)
-        let container = try! ModelContainer(for: Habit.self, configurations: config)
+        let container = try! ModelContainer(
+            for: Habit.self,
+            HabitCompletion.self,
+            HabitOrder.self,
+            configurations: config
+        )
         let calendar = Calendar.current
         let today = Date()
 
@@ -138,6 +204,12 @@ struct PreviewContainer {
             Habit(name: "Drink Water", icon: "drop.fill", color: "#339AF0", completionsPerDay: 8),
         ]
         habits.forEach { container.mainContext.insert($0) }
+
+        let allHabits = [exerciseHabit] + habits
+        for (index, habit) in allHabits.enumerated() {
+            let order = HabitOrder(habit: habit, orderIndex: index)
+            container.mainContext.insert(order)
+        }
 
         return container
     }

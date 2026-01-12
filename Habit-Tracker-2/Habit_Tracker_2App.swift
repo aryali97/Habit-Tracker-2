@@ -13,7 +13,7 @@ struct Habit_Tracker_2App: App {
     let container: ModelContainer
 
     init() {
-        let schema = Schema([Habit.self, HabitCompletion.self])
+        let schema = Schema([Habit.self, HabitCompletion.self, HabitOrder.self])
         let storeURL = Self.makeStoreURL()
         let config = ModelConfiguration(schema: schema, url: storeURL)
         let builtContainer: ModelContainer
