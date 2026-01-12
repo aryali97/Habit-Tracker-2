@@ -132,9 +132,10 @@ struct HabitMonthlyViewSheet: View {
         let headerRowHeight: CGFloat = 36
         let dividerHeight: CGFloat = 1
         let titleHeight: CGFloat = 18
+        let calendarTitleSpacing: CGFloat = 16
         let weekdayHeight: CGFloat = 13
         let verticalSpacing: CGFloat = 16
-        let rowHeight: CGFloat = 40
+        let rowHeight: CGFloat = 42
         let rowSpacing: CGFloat = 8
         let bottomPadding: CGFloat = 16
         let rows: CGFloat = 6
@@ -143,9 +144,9 @@ struct HabitMonthlyViewSheet: View {
             + verticalSpacing
             + dividerHeight
             + verticalSpacing
-            + titleHeight
-            + verticalSpacing
-        let gridBlock = weekdayHeight
+        let gridBlock = titleHeight
+            + calendarTitleSpacing
+            + weekdayHeight
             + (rows * rowHeight)
             + ((rows - 1) * rowSpacing)
             + bottomPadding
@@ -193,6 +194,7 @@ private struct MonthCalendarPage: View {
         VStack(spacing: 8) {
             Text(monthTitle)
                 .font(.system(size: 15, weight: .semibold))
+                .padding(.vertical, 4)
                 .foregroundStyle(.white)
 
             HStack(spacing: 0) {
@@ -264,7 +266,49 @@ private struct MonthlyDayCell: View {
             Text("\(calendar.component(.day, from: date))")
                 .font(.system(size: 14, weight: .semibold))
                 .foregroundStyle(.white.opacity(numberOpacity))
+
+            if shouldShowCompletionMarkers {
+                completionMarkerRow
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
+                    .padding(.bottom, 2)
+            }
         }
-        .frame(height: 40)
+        .frame(height: 42)
+    }
+
+    private var shouldShowCompletionMarkers: Bool {
+        completionCount > 0 && isCurrentMonth && !isBeforeCreation && !isFuture
+    }
+
+    @ViewBuilder
+    private var completionMarkerRow: some View {
+        let dotSize: CGFloat = 4
+        let markerHeight: CGFloat = 14
+        let dotColor = habitColor.opacity(HabitOpacity.completed)
+        let textColor = Color.white.opacity(numberOpacity)
+
+        if completionCount <= 5 {
+            HStack(spacing: 3) {
+                ForEach(0..<completionCount, id: \.self) { _ in
+                    Circle()
+                        .fill(dotColor)
+                        .frame(width: dotSize, height: dotSize)
+                }
+            }
+            .frame(height: markerHeight, alignment: .center)
+            .frame(maxWidth: .infinity, alignment: .center)
+        } else {
+            HStack(alignment: .center, spacing: 4) {
+                Circle()
+                    .fill(dotColor)
+                    .frame(width: dotSize, height: dotSize)
+                Text("\(completionCount)")
+                    .font(.system(size: 9, weight: .semibold))
+                    .foregroundStyle(textColor)
+                    .lineLimit(1)
+            }
+            .frame(height: markerHeight, alignment: .center)
+            .frame(maxWidth: .infinity, alignment: .center)
+        }
     }
 }
