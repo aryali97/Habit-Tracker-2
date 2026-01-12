@@ -1,0 +1,270 @@
+//
+//  HabitMonthlyViewSheet.swift
+//  Habit-Tracker-2
+//
+
+import SwiftUI
+import SwiftData
+import UIKit
+
+struct HabitMonthlyViewSheet: View {
+    let habit: Habit
+    @State private var monthOffset: Int = 0
+
+    init(habit: Habit) {
+        self.habit = habit
+    }
+
+    private var habitColor: Color {
+        Color(hex: habit.color)
+    }
+
+    private var habitCreatedAt: Date {
+        Calendar.current.startOfDay(for: habit.createdAt)
+    }
+
+    private var completionsByDate: [Date: Int] {
+        var dict: [Date: Int] = [:]
+        let calendar = Calendar.current
+        for completion in habit.completions {
+            let dateKey = calendar.startOfDay(for: completion.date)
+            dict[dateKey] = completion.count
+        }
+        return dict
+    }
+
+    private var monthTitle: String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "MMM yyyy"
+        formatter.locale = Locale.current
+        return formatter.string(from: monthStart).uppercased()
+    }
+
+    private var weekdaySymbols: [String] {
+        let formatter = DateFormatter()
+        formatter.locale = Locale.current
+        return formatter.shortWeekdaySymbols.map { $0.prefix(3).uppercased() }
+    }
+
+    private var gridDates: [Date] {
+        let calendar = Calendar.current
+        guard let firstWeekStart = calendar.dateInterval(of: .weekOfYear, for: monthStart)?.start else {
+            return []
+        }
+
+        return (0..<42).compactMap { dayOffset in
+            calendar.date(byAdding: .day, value: dayOffset, to: firstWeekStart)
+        }
+    }
+
+    private var currentMonthStart: Date {
+        let calendar = Calendar.current
+        let today = calendar.startOfDay(for: Date())
+        return calendar.date(from: calendar.dateComponents([.year, .month], from: today)) ?? today
+    }
+
+    private var monthStart: Date {
+        Calendar.current.date(byAdding: .month, value: monthOffset, to: currentMonthStart) ?? currentMonthStart
+    }
+
+    private var monthOffsets: [Int] {
+        let maxPastMonths = 24
+        return Array((-maxPastMonths)...0)
+    }
+
+    var body: some View {
+        VStack(spacing: 16) {
+            HStack(alignment: .center, spacing: 12) {
+                Image(systemName: habit.icon)
+                    .font(.system(size: 18, weight: .medium))
+                    .foregroundStyle(habitColor)
+                    .frame(width: 36, height: 36)
+                    .background(habitColor.opacity(HabitOpacity.inactive))
+                    .clipShape(Circle())
+
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(habit.name)
+                        .font(.system(size: 17, weight: .semibold))
+                        .foregroundStyle(.white)
+
+                    if let description = habit.habitDescription, !description.isEmpty {
+                        Text(description)
+                            .font(.system(size: 13, weight: .medium))
+                            .foregroundStyle(.white.opacity(0.6))
+                    }
+                }
+
+                Spacer()
+            }
+            .padding(.horizontal, 16)
+            .padding(.top, 12)
+
+            Rectangle()
+                .fill(Color.white.opacity(0.1))
+                .frame(height: 1)
+                .padding(.horizontal, 16)
+
+            TabView(selection: $monthOffset) {
+                ForEach(monthOffsets, id: \.self) { offset in
+                    MonthCalendarPage(
+                        monthStart: Calendar.current.date(byAdding: .month, value: offset, to: currentMonthStart)
+                            ?? currentMonthStart,
+                        weekdaySymbols: weekdaySymbols,
+                        habitCreatedAt: habitCreatedAt,
+                        completionsByDate: completionsByDate,
+                        habitColor: habitColor
+                    )
+                    .tag(offset)
+                }
+            }
+            .tabViewStyle(.page(indexDisplayMode: .never))
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+        }
+        .background(AppColors.cardBackground)
+        .presentationBackground(AppColors.cardBackground)
+        .presentationDetents([.height(detentHeight)])
+        .presentationDragIndicator(.visible)
+        .preferredColorScheme(.dark)
+    }
+
+    private var detentHeight: CGFloat {
+        let headerPaddingTop: CGFloat = 12
+        let headerRowHeight: CGFloat = 36
+        let dividerHeight: CGFloat = 1
+        let titleHeight: CGFloat = 18
+        let weekdayHeight: CGFloat = 13
+        let verticalSpacing: CGFloat = 16
+        let rowHeight: CGFloat = 40
+        let rowSpacing: CGFloat = 8
+        let bottomPadding: CGFloat = 16
+        let rows: CGFloat = 6
+        let headerBlock = headerPaddingTop
+            + headerRowHeight
+            + verticalSpacing
+            + dividerHeight
+            + verticalSpacing
+            + titleHeight
+            + verticalSpacing
+        let gridBlock = weekdayHeight
+            + (rows * rowHeight)
+            + ((rows - 1) * rowSpacing)
+            + bottomPadding
+        let calculated = headerBlock + gridBlock
+        let maxHeight = (currentScreenHeight ?? 800) * 0.85
+        return min(maxHeight, calculated)
+    }
+
+    private var currentScreenHeight: CGFloat? {
+        UIApplication.shared.connectedScenes
+            .compactMap { $0 as? UIWindowScene }
+            .first?
+            .screen
+            .bounds
+            .height
+    }
+}
+
+private struct MonthCalendarPage: View {
+    let monthStart: Date
+    let weekdaySymbols: [String]
+    let habitCreatedAt: Date
+    let completionsByDate: [Date: Int]
+    let habitColor: Color
+
+    private var monthTitle: String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "MMM yyyy"
+        formatter.locale = Locale.current
+        return formatter.string(from: monthStart).uppercased()
+    }
+
+    private var gridDates: [Date] {
+        let calendar = Calendar.current
+        guard let firstWeekStart = calendar.dateInterval(of: .weekOfYear, for: monthStart)?.start else {
+            return []
+        }
+
+        return (0..<42).compactMap { dayOffset in
+            calendar.date(byAdding: .day, value: dayOffset, to: firstWeekStart)
+        }
+    }
+
+    var body: some View {
+        VStack(spacing: 8) {
+            Text(monthTitle)
+                .font(.system(size: 15, weight: .semibold))
+                .foregroundStyle(.white)
+
+            HStack(spacing: 0) {
+                ForEach(weekdaySymbols, id: \.self) { symbol in
+                    Text(symbol)
+                        .font(.system(size: 11, weight: .semibold))
+                        .foregroundStyle(.white.opacity(0.6))
+                        .frame(maxWidth: .infinity)
+                }
+            }
+
+            let columns = Array(repeating: GridItem(.flexible(), spacing: 8), count: 7)
+            LazyVGrid(columns: columns, spacing: 8) {
+                ForEach(gridDates, id: \.self) { date in
+                    MonthlyDayCell(
+                        date: date,
+                        monthStart: monthStart,
+                        habitCreatedAt: habitCreatedAt,
+                        completionCount: completionsByDate[Calendar.current.startOfDay(for: date)] ?? 0,
+                        habitColor: habitColor
+                    )
+                }
+            }
+        }
+        .padding(.horizontal, 16)
+        .padding(.bottom, 16)
+    }
+}
+
+private struct MonthlyDayCell: View {
+    let date: Date
+    let monthStart: Date
+    let habitCreatedAt: Date
+    let completionCount: Int
+    let habitColor: Color
+
+    private var calendar: Calendar { Calendar.current }
+
+    private var isCurrentMonth: Bool {
+        calendar.isDate(date, equalTo: monthStart, toGranularity: .month)
+    }
+
+    private var isFuture: Bool {
+        date > calendar.startOfDay(for: Date())
+    }
+
+    private var isBeforeCreation: Bool {
+        date < habitCreatedAt
+    }
+
+    private var numberOpacity: Double {
+        if !isCurrentMonth || isFuture || isBeforeCreation {
+            return 0.35
+        }
+        return 0.95
+    }
+
+    private var showsBackground: Bool {
+        completionCount > 0
+    }
+
+    var body: some View {
+        ZStack {
+            if showsBackground {
+                RoundedRectangle(cornerRadius: 8)
+                    .fill(habitColor.opacity(HabitOpacity.inactive))
+            }
+
+            Text("\(calendar.component(.day, from: date))")
+                .font(.system(size: 14, weight: .semibold))
+                .foregroundStyle(.white.opacity(numberOpacity))
+        }
+        .frame(height: 40)
+    }
+}

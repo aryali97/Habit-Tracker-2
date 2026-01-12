@@ -8,6 +8,7 @@ import SwiftData
 
 struct HabitGridView: View {
     let habit: Habit
+    @State private var showingMonthlyView = false
 
     private let cellSize: CGFloat = 8
     private let cellSpacing: CGFloat = 2
@@ -125,10 +126,17 @@ struct HabitGridView: View {
                 }
                 .padding(.horizontal, 4)
             }
+            .contentShape(Rectangle())
+            .onTapGesture {
+                showingMonthlyView = true
+            }
             .onAppear {
                 // Scroll to the last week (current week) on appear
                 proxy.scrollTo(numberOfWeeks - 1, anchor: .trailing)
             }
+        }
+        .sheet(isPresented: $showingMonthlyView) {
+            HabitMonthlyViewSheet(habit: habit)
         }
     }
 

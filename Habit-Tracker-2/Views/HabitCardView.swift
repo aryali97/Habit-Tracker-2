@@ -120,6 +120,10 @@ struct CompletionButtonView: View {
         todayCompletion?.count ?? 0
     }
 
+    private var usesPickerOnTap: Bool {
+        habit.completionsPerDay > 10
+    }
+
     var body: some View {
         Group {
             if habit.completionsPerDay == 1 {
@@ -157,14 +161,26 @@ struct CompletionButtonView: View {
                         goal: habit.completionsPerDay,
                         color: habitColor,
                         isComplete: isCompletedToday,
-                        onTap: incrementCompletion,
+                        onTap: {
+                            if usesPickerOnTap {
+                                showingPicker = true
+                            } else {
+                                incrementCompletion()
+                            }
+                        },
                         onLongPress: { showingPicker = true }
                     )
                     .opacity(isCompletedToday ? 0 : 1)
                     .scaleEffect(isCompletedToday ? 0.9 : 1)
                     .allowsHitTesting(!isCompletedToday)
 
-                    Button(action: resetCompletion) {
+                    Button {
+                        if usesPickerOnTap {
+                            showingPicker = true
+                        } else {
+                            resetCompletion()
+                        }
+                    } label: {
                         Image(systemName: "checkmark")
                             .font(.system(size: 16, weight: .bold))
                             .symbolEffect(.bounce, options: .speed(2.8), value: isCompletedToday)
@@ -280,18 +296,36 @@ struct SegmentedProgressButton: View {
     private let lineWidth: CGFloat = 3
     private let gapDegrees: Double = 6
 
+    private var usesContinuousArc: Bool {
+        goal > 10
+    }
+
     var body: some View {
         ZStack {
-            // Background segments
-            ForEach(0..<goal, id: \.self) { index in
-                segmentArc(index: index, filled: false)
+            if usesContinuousArc {
+                // Continuous arc for high-count habits
+                Circle()
                     .stroke(color.opacity(HabitOpacity.failed), lineWidth: lineWidth)
-            }
+                    .frame(width: size - lineWidth, height: size - lineWidth)
 
-            // Filled segments
-            ForEach(0..<count, id: \.self) { index in
-                segmentArc(index: index, filled: true)
+                // Filled arc (capped at 100%)
+                Circle()
+                    .trim(from: 0, to: min(Double(count) / Double(goal), 1.0))
                     .stroke(color, style: StrokeStyle(lineWidth: lineWidth, lineCap: .round))
+                    .frame(width: size - lineWidth, height: size - lineWidth)
+                    .rotationEffect(.degrees(-90))
+            } else {
+                // Background segments
+                ForEach(0..<goal, id: \.self) { index in
+                    segmentArc(index: index, filled: false)
+                        .stroke(color.opacity(HabitOpacity.failed), lineWidth: lineWidth)
+                }
+
+                // Filled segments (capped at goal)
+                ForEach(0..<min(count, goal), id: \.self) { index in
+                    segmentArc(index: index, filled: true)
+                        .stroke(color, style: StrokeStyle(lineWidth: lineWidth, lineCap: .round))
+                }
             }
 
             // Plus icon
@@ -348,6 +382,9 @@ struct CompletionPickerSheet: View {
 
     @Environment(\.dismiss) private var dismiss
     @State private var selectedCount: Int
+    @State private var stepSize: Int
+
+    private let stepOptions: [Int] = [1, 5, 10, 25, 50]
 
     private var habitColor: Color {
         Color(hex: habit.color)
@@ -358,6 +395,7 @@ struct CompletionPickerSheet: View {
         self.currentCount = currentCount
         self.onSave = onSave
         self._selectedCount = State(initialValue: currentCount)
+        self._stepSize = State(initialValue: habit.completionsPerDay > 10 ? 10 : 1)
     }
 
     var body: some View {
@@ -370,16 +408,18 @@ struct CompletionPickerSheet: View {
                         .foregroundStyle(habitColor)
                         .frame(width: 64, height: 64)
                         .background(habitColor.opacity(HabitOpacity.inactive))
-                        .clipShape(RoundedRectangle(cornerRadius: 14))
+                        .clipShape(Circle())
 
                     VStack(alignment: .leading) {
                         Text(habit.name)
                             .font(.title2)
                             .fontWeight(.semibold)
 
-                        Text("Goal: \(habit.completionsPerDay) per day")
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
+                        if let description = habit.habitDescription, !description.isEmpty {
+                            Text(description)
+                                .font(.subheadline)
+                                .foregroundStyle(.secondary)
+                        }
                     }
 
                     Spacer()
@@ -388,27 +428,42 @@ struct CompletionPickerSheet: View {
 
                 // Large progress ring
                 ZStack {
-                    // Background segments
-                    ForEach(0..<habit.completionsPerDay, id: \.self) { index in
-                        LargeSegmentArc(
-                            index: index,
-                            total: habit.completionsPerDay,
-                            size: 180
-                        )
-                        .stroke(
-                            habitColor.opacity(HabitOpacity.failed),
-                            style: StrokeStyle(lineWidth: 8, lineCap: .round)
-                        )
-                    }
+                    if habit.completionsPerDay > 10 {
+                        // Continuous arc for high-count habits
+                        Circle()
+                            .stroke(habitColor.opacity(HabitOpacity.failed), lineWidth: 8)
+                            .frame(width: 172, height: 172)
 
-                    // Filled segments
-                    ForEach(0..<selectedCount, id: \.self) { index in
-                        LargeSegmentArc(
-                            index: index,
-                            total: habit.completionsPerDay,
-                            size: 180
-                        )
-                        .stroke(habitColor, style: StrokeStyle(lineWidth: 8, lineCap: .round))
+                        // Filled arc (capped at 100%)
+                        Circle()
+                            .trim(from: 0, to: min(Double(selectedCount) / Double(habit.completionsPerDay), 1.0))
+                            .stroke(habitColor, style: StrokeStyle(lineWidth: 8, lineCap: .round))
+                            .frame(width: 172, height: 172)
+                            .rotationEffect(.degrees(-90))
+                    } else {
+                        // Segmented arc for low-count habits
+                        // Background segments
+                        ForEach(0..<habit.completionsPerDay, id: \.self) { index in
+                            LargeSegmentArc(
+                                index: index,
+                                total: habit.completionsPerDay,
+                                size: 180
+                            )
+                            .stroke(
+                                habitColor.opacity(HabitOpacity.failed),
+                                style: StrokeStyle(lineWidth: 8, lineCap: .round)
+                            )
+                        }
+
+                        // Filled segments (capped at goal)
+                        ForEach(0..<min(selectedCount, habit.completionsPerDay), id: \.self) { index in
+                            LargeSegmentArc(
+                                index: index,
+                                total: habit.completionsPerDay,
+                                size: 180
+                            )
+                            .stroke(habitColor, style: StrokeStyle(lineWidth: 8, lineCap: .round))
+                        }
                     }
 
                     // Count display
@@ -425,39 +480,61 @@ struct CompletionPickerSheet: View {
                 .frame(width: 180, height: 180)
 
                 // Stepper controls
-                HStack(spacing: 24) {
+                HStack(spacing: 12) {
+                    let canDecrement = selectedCount > 0
                     Button {
-                        if selectedCount > 0 {
-                            selectedCount -= 1
-                            Haptics.selection()
+                        guard canDecrement else { return }
+                        let nextValue = max(selectedCount - stepSize, 0)
+                        withAnimation(.interpolatingSpring(stiffness: 260, damping: 22)) {
+                            selectedCount = nextValue
                         }
+                        Haptics.impact(.light)
                     } label: {
                         Image(systemName: "minus")
-                            .font(.title2.weight(.semibold))
+                            .font(.title3.weight(.semibold))
                             .foregroundStyle(.white)
-                            .frame(width: 56, height: 56)
-                            .background(Color(.systemGray5))
+                            .frame(width: 44, height: 44)
+                            .background(Color.white.opacity(0.12))
                             .clipShape(Circle())
                     }
-                    .disabled(selectedCount == 0)
-                    .opacity(selectedCount == 0 ? 0.5 : 1)
+                    .disabled(!canDecrement)
+                    .opacity(canDecrement ? 1 : 0.45)
+
+                    ForEach(stepOptions, id: \.self) { option in
+                        Button {
+                            guard stepSize != option else { return }
+                            withAnimation(.easeOut(duration: 0.15)) {
+                                stepSize = option
+                            }
+                            Haptics.selection()
+                        } label: {
+                            Text("\(option)")
+                                .font(.system(size: 14, weight: .semibold))
+                                .foregroundStyle(stepSize == option ? habitColor : .white.opacity(0.7))
+                                .frame(width: 28, height: 28)
+                        }
+                        .buttonStyle(.plain)
+                    }
 
                     Button {
-                        if selectedCount < habit.completionsPerDay {
-                            selectedCount += 1
-                            Haptics.selection()
+                        let nextValue = selectedCount + stepSize
+                        withAnimation(.interpolatingSpring(stiffness: 260, damping: 22)) {
+                            selectedCount = nextValue
                         }
+                        Haptics.impact(.light)
                     } label: {
                         Image(systemName: "plus")
-                            .font(.title2.weight(.semibold))
+                            .font(.title3.weight(.semibold))
                             .foregroundStyle(.white)
-                            .frame(width: 56, height: 56)
+                            .frame(width: 44, height: 44)
                             .background(habitColor)
                             .clipShape(Circle())
                     }
-                    .disabled(selectedCount >= habit.completionsPerDay)
-                    .opacity(selectedCount >= habit.completionsPerDay ? 0.5 : 1)
                 }
+                .padding(.horizontal, 8)
+                .padding(.vertical, 8)
+                .background(Color.white.opacity(0.06))
+                .clipShape(Capsule())
 
                 Spacer()
             }

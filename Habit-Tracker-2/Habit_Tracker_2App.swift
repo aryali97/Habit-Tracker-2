@@ -76,11 +76,44 @@ struct Habit_Tracker_2App: App {
         }
 
         // Add two more recent habits for comparison
-        let runHabit = Habit(name: "Morning Run", icon: "figure.run", color: "#51CF66")
+        let runHabit = Habit(
+            name: "Morning Run",
+            habitDescription: "Minutes of running",
+            icon: "figure.run",
+            color: "#51CF66",
+            completionsPerDay: 60
+        )
         context.insert(runHabit)
+
+        // Backfill running data for past week
+        let runCompletionData: [(Int, Int)] = [
+            (-1, 45),  // Yesterday: 45 minutes
+            (-2, 60),  // 2 days ago: 60 minutes (full)
+            (-3, 30),  // 3 days ago: 30 minutes
+            (-4, 55),  // 4 days ago: 55 minutes
+            (-6, 40),  // 6 days ago: 40 minutes
+            (-7, 60),  // 1 week ago: 60 minutes (full)
+        ]
+        for (dayOffset, count) in runCompletionData {
+            if let date = calendar.date(byAdding: .day, value: dayOffset, to: today) {
+                let completion = HabitCompletion(date: calendar.startOfDay(for: date), count: count)
+                completion.habit = runHabit
+                context.insert(completion)
+            }
+        }
 
         let waterHabit = Habit(name: "Drink Water", icon: "drop.fill", color: "#339AF0", completionsPerDay: 8)
         context.insert(waterHabit)
+
+        // Add Focus Habit with multi-completion
+        let focusHabit = Habit(
+            name: "Focus Habit",
+            habitDescription: "Short daily focus",
+            icon: "alarm",
+            color: "#5C7CFA",
+            completionsPerDay: 2
+        )
+        context.insert(focusHabit)
     }
 
     private static func makeStoreURL() -> URL {
