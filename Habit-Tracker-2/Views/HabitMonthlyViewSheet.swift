@@ -9,10 +9,13 @@ import UIKit
 
 struct HabitMonthlyViewSheet: View {
     let habit: Habit
+    let onShowCompletionPicker: (Date) -> Void
     @State private var monthOffset: Int = 0
+    @Environment(\.modelContext) private var modelContext
 
-    init(habit: Habit) {
+    init(habit: Habit, onShowCompletionPicker: @escaping (Date) -> Void) {
         self.habit = habit
+        self.onShowCompletionPicker = onShowCompletionPicker
     }
 
     private var habitColor: Color {
@@ -112,7 +115,10 @@ struct HabitMonthlyViewSheet: View {
                         weekdaySymbols: weekdaySymbols,
                         habitCreatedAt: habitCreatedAt,
                         completionsByDate: completionsByDate,
-                        habitColor: habitColor
+                        habitColor: habitColor,
+                        onSelectDate: { date in
+                            handleDateTap(date)
+                        }
                     )
                     .tag(offset)
                 }
@@ -163,6 +169,59 @@ struct HabitMonthlyViewSheet: View {
             .bounds
             .height
     }
+
+    private func handleDateTap(_ date: Date) {
+        let startOfDate = Calendar.current.startOfDay(for: date)
+
+        if habit.completionsPerDay == 1 {
+            toggleCompletion(for: startOfDate)
+        } else if habit.completionsPerDay <= 10 {
+            cycleCompletion(for: startOfDate)
+        } else {
+            onShowCompletionPicker(startOfDate)
+        }
+    }
+
+    private func toggleCompletion(for date: Date) {
+        let currentCount = completionCount(for: date)
+        let isCompleting = currentCount == 0
+        Haptics.impact(isCompleting ? .medium : .light)
+        setCompletionCount(isCompleting ? 1 : 0, for: date)
+    }
+
+    private func cycleCompletion(for date: Date) {
+        let currentCount = completionCount(for: date)
+        let nextCount = currentCount >= habit.completionsPerDay ? 0 : currentCount + 1
+        let impactStyle: Haptics.ImpactStyle = nextCount == 0 ? .light : (nextCount >= habit.completionsPerDay ? .medium : .light)
+        Haptics.impact(impactStyle)
+        setCompletionCount(nextCount, for: date)
+    }
+
+    private func completionCount(for date: Date) -> Int {
+        habit.completions.first { Calendar.current.isDate($0.date, inSameDayAs: date) }?.count ?? 0
+    }
+
+    private func setCompletionCount(_ count: Int, for date: Date) {
+        let startOfDate = Calendar.current.startOfDay(for: date)
+
+        if let completion = habit.completions.first(where: { Calendar.current.isDate($0.date, inSameDayAs: startOfDate) }) {
+            completion.count = count
+        } else if count > 0 {
+            let completion = HabitCompletion(date: startOfDate, count: count)
+            completion.habit = habit
+            modelContext.insert(completion)
+        }
+
+        saveContext()
+    }
+
+    private func saveContext() {
+        do {
+            try modelContext.save()
+        } catch {
+            assertionFailure("Failed to save habit completion: \(error)")
+        }
+    }
 }
 
 private struct MonthCalendarPage: View {
@@ -171,6 +230,7 @@ private struct MonthCalendarPage: View {
     let habitCreatedAt: Date
     let completionsByDate: [Date: Int]
     let habitColor: Color
+    let onSelectDate: (Date) -> Void
 
     private var monthTitle: String {
         let formatter = DateFormatter()
@@ -209,18 +269,34 @@ private struct MonthCalendarPage: View {
             let columns = Array(repeating: GridItem(.flexible(), spacing: 8), count: 7)
             LazyVGrid(columns: columns, spacing: 8) {
                 ForEach(gridDates, id: \.self) { date in
-                    MonthlyDayCell(
-                        date: date,
-                        monthStart: monthStart,
-                        habitCreatedAt: habitCreatedAt,
-                        completionCount: completionsByDate[Calendar.current.startOfDay(for: date)] ?? 0,
-                        habitColor: habitColor
-                    )
+                    let isInteractive = canInteract(with: date)
+                    Button {
+                        onSelectDate(date)
+                    } label: {
+                        MonthlyDayCell(
+                            date: date,
+                            monthStart: monthStart,
+                            habitCreatedAt: habitCreatedAt,
+                            completionCount: completionsByDate[Calendar.current.startOfDay(for: date)] ?? 0,
+                            habitColor: habitColor
+                        )
+                    }
+                    .buttonStyle(.plain)
+                    .disabled(!isInteractive)
                 }
             }
         }
         .padding(.horizontal, 16)
         .padding(.bottom, 16)
+    }
+
+    private func canInteract(with date: Date) -> Bool {
+        let calendar = Calendar.current
+        let startOfDate = calendar.startOfDay(for: date)
+        let isCurrentMonth = calendar.isDate(date, equalTo: monthStart, toGranularity: .month)
+        let isFuture = startOfDate > calendar.startOfDay(for: Date())
+        let isBeforeCreation = startOfDate < habitCreatedAt
+        return isCurrentMonth && !isFuture && !isBeforeCreation
     }
 }
 

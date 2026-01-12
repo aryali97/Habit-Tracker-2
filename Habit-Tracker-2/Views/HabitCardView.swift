@@ -379,6 +379,7 @@ struct CompletionPickerSheet: View {
     let habit: Habit
     let currentCount: Int
     let onSave: (Int) -> Void
+    let title: String
 
     @Environment(\.dismiss) private var dismiss
     @State private var selectedCount: Int
@@ -390,9 +391,15 @@ struct CompletionPickerSheet: View {
         Color(hex: habit.color)
     }
 
-    init(habit: Habit, currentCount: Int, onSave: @escaping (Int) -> Void) {
+    init(
+        habit: Habit,
+        currentCount: Int,
+        title: String = "Today's Progress",
+        onSave: @escaping (Int) -> Void
+    ) {
         self.habit = habit
         self.currentCount = currentCount
+        self.title = title
         self.onSave = onSave
         self._selectedCount = State(initialValue: currentCount)
         self._stepSize = State(initialValue: habit.completionsPerDay > 10 ? 10 : 1)
@@ -540,7 +547,7 @@ struct CompletionPickerSheet: View {
             }
             .safeAreaPadding(.top, 56)
             .background(AppColors.background)
-            .navigationTitle("Today's Progress")
+            .navigationTitle(title)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {

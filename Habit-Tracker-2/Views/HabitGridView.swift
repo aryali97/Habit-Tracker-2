@@ -6,9 +6,17 @@
 import SwiftUI
 import SwiftData
 
+struct CompletionPickerDateWrapper: Identifiable {
+    let id = UUID()
+    let date: Date
+}
+
 struct HabitGridView: View {
     let habit: Habit
+    @Environment(\.modelContext) private var modelContext
     @State private var showingMonthlyView = false
+    @State private var completionPickerDate: CompletionPickerDateWrapper?
+    @State private var restoreMonthlyViewAfterPicker = false
 
     private let cellSize: CGFloat = 8
     private let cellSpacing: CGFloat = 2
@@ -136,7 +144,87 @@ struct HabitGridView: View {
             }
         }
         .sheet(isPresented: $showingMonthlyView) {
-            HabitMonthlyViewSheet(habit: habit)
+            HabitMonthlyViewSheet(
+                habit: habit,
+                onShowCompletionPicker: { date in
+                    showCompletionPicker(for: date)
+                }
+            )
+        }
+        .sheet(item: $completionPickerDate, onDismiss: handleCompletionPickerDismiss) { wrapper in
+            CompletionPickerSheet(
+                habit: habit,
+                currentCount: completionCount(for: wrapper.date),
+                title: completionPickerTitle(for: wrapper.date),
+                onSave: { newCount in
+                    setCompletionCount(newCount, for: wrapper.date)
+                }
+            )
+            .presentationDetents([.medium])
+        }
+    }
+
+    private func showCompletionPicker(for date: Date) {
+        restoreMonthlyViewAfterPicker = showingMonthlyView
+        showingMonthlyView = false
+        // Use a small delay to ensure monthly view dismisses first
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+            let startOfDate = Calendar.current.startOfDay(for: date)
+            completionPickerDate = CompletionPickerDateWrapper(date: startOfDate)
+        }
+    }
+
+    private func handleCompletionPickerDismiss() {
+        if restoreMonthlyViewAfterPicker {
+            showingMonthlyView = true
+            restoreMonthlyViewAfterPicker = false
+        }
+    }
+
+    private func completionPickerTitle(for date: Date) -> String {
+        let calendar = Calendar.current
+        let startOfDate = calendar.startOfDay(for: date)
+        let today = calendar.startOfDay(for: Date())
+
+        if calendar.isDate(startOfDate, inSameDayAs: today) {
+            return "Today"
+        }
+
+        if let yesterday = calendar.date(byAdding: .day, value: -1, to: today),
+           calendar.isDate(startOfDate, inSameDayAs: yesterday) {
+            return "Yesterday"
+        }
+
+        let formatter = DateFormatter()
+        formatter.dateFormat = "EEEE, MMM d"
+        formatter.locale = Locale.current
+        return formatter.string(from: startOfDate).uppercased()
+    }
+
+    private func completionCount(for date: Date) -> Int {
+        habit.completions.first { Calendar.current.isDate($0.date, inSameDayAs: date) }?.count ?? 0
+    }
+
+    private func setCompletionCount(_ count: Int, for date: Date) {
+        let startOfDate = Calendar.current.startOfDay(for: date)
+
+        if let completion = habit.completions.first(where: { Calendar.current.isDate($0.date, inSameDayAs: startOfDate) }) {
+            completion.count = count
+        } else if count > 0 {
+            let completion = HabitCompletion(date: startOfDate, count: count)
+            completion.habit = habit
+            modelContext.insert(completion)
+        }
+
+        Haptics.notification(.success)
+        saveContext()
+    }
+
+    private func saveContext() {
+        do {
+            try modelContext.save()
+        } catch {
+            assertionFailure("Failed to save habit completion: \(error)")
         }
     }
 
