@@ -214,6 +214,11 @@ struct HabitGridView: View {
             let completion = HabitCompletion(date: startOfDate, count: count)
             completion.habit = habit
             modelContext.insert(completion)
+
+            // Update habit start date if this completion is earlier
+            if startOfDate < Calendar.current.startOfDay(for: habit.createdAt) {
+                habit.createdAt = startOfDate
+            }
         }
 
         Haptics.notification(.success)

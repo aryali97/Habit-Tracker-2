@@ -210,6 +210,11 @@ struct HabitMonthlyViewSheet: View {
             let completion = HabitCompletion(date: startOfDate, count: count)
             completion.habit = habit
             modelContext.insert(completion)
+
+            // Update habit start date if this completion is earlier
+            if startOfDate < Calendar.current.startOfDay(for: habit.createdAt) {
+                habit.createdAt = startOfDate
+            }
         }
 
         saveContext()
@@ -295,8 +300,7 @@ private struct MonthCalendarPage: View {
         let startOfDate = calendar.startOfDay(for: date)
         let isCurrentMonth = calendar.isDate(date, equalTo: monthStart, toGranularity: .month)
         let isFuture = startOfDate > calendar.startOfDay(for: Date())
-        let isBeforeCreation = startOfDate < habitCreatedAt
-        return isCurrentMonth && !isFuture && !isBeforeCreation
+        return isCurrentMonth && !isFuture
     }
 }
 
@@ -322,7 +326,7 @@ private struct MonthlyDayCell: View {
     }
 
     private var numberOpacity: Double {
-        if !isCurrentMonth || isFuture || isBeforeCreation {
+        if !isCurrentMonth || isFuture {
             return 0.35
         }
         return 0.95
@@ -353,7 +357,7 @@ private struct MonthlyDayCell: View {
     }
 
     private var shouldShowCompletionMarkers: Bool {
-        completionCount > 0 && isCurrentMonth && !isBeforeCreation && !isFuture
+        completionCount > 0 && isCurrentMonth && !isFuture
     }
 
     @ViewBuilder
