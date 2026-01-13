@@ -110,5 +110,61 @@ Grid of preset colors for habit selection:
 - Subtle shadows for depth
 - Habit color used throughout: icon background, completion button, grid cells, goal indicators
 
+### Monthly Calendar View
+Tapping the grid visualization opens a monthly calendar sheet:
+- **Navigation**: TabView-based paging through past 24 months
+- **Swipe Interaction**: Swipe left to go forward in time, right to go backward
+- **Month Display**: Shows full month grid (6 weeks × 7 days = 42 cells)
+- **Current Month**: Starts at the current month
+- **Completion Markers**:
+  - 1-5 completions: Dots below the date number
+  - 6+ completions: Single dot + count number
+- **Background Highlight**: Dates with completions show subtle background tint
+
+**Date Tap Behavior** (varies by completionsPerDay):
+- **completionsPerDay = 1**: Toggle between 0 and 1 (checkmark behavior)
+- **completionsPerDay ≤ 10**: Cycle through 0 → 1 → 2 → ... → goal → 0
+- **completionsPerDay > 10**: Open CompletionPickerSheet for stepper-based input
+
+**Interactive Dates**:
+- Only dates in the current displayed month are tappable
+- Future dates are disabled (cannot log completions for dates that haven't occurred)
+- Past dates before habit creation ARE enabled (see Historical Data Editing below)
+
+### CompletionPickerSheet
+For habits with high completion goals (completionsPerDay > 10), a specialized picker sheet provides fine-grained control:
+
+**Interface Components**:
+- **Current Count Display**: Large centered number showing current value
+- **Step Size Selector**: Row of buttons (1, 5, 10, 25, 50) to choose increment/decrement amount
+- **Plus/Minus Buttons**: Adjust count by selected step size
+- **Save Button**: Toolbar button to commit changes
+- **Title**: Shows "Today", "Yesterday", or formatted date (e.g., "MONDAY, DEC 28")
+
+**Interaction Pattern**:
+1. Select desired step size (1, 5, 10, 25, or 50)
+2. Tap + or - buttons to adjust count by that step
+3. Repeat as needed to reach target value
+4. Tap Save to commit (or swipe down to cancel)
+
+**Common Mistake**: The number buttons (1, 5, 10, etc.) are NOT direct value setters—they select the step size for the +/- buttons.
+
+### Historical Data Editing
+Users can add, edit, or remove completions for ANY past date, including dates before the habit was created:
+
+**Automatic Start Date Adjustment**:
+- When a completion is added for a date earlier than the habit's creation date, the habit's start date automatically updates to that earlier date
+- This allows users to backfill historical data without manual configuration
+
+**Use Cases**:
+- User forgot to track habit for several days: can backfill all missed dates
+- User wants to import data from previous tracking system
+- User realizes they've been doing the habit longer than they initially recorded
+
+**Visual Behavior**:
+- Grid cells for dates before habit creation show as "inactive" (darkest opacity) when completion count is 0
+- Once a completion is added, the cell lights up with appropriate intensity
+- The monthly calendar allows navigation back 24 months from current date
+
 ### UX Examples
 Take a look at ~/Downloads/habit_tracker_example_images/ for examples of how the UX should look.
