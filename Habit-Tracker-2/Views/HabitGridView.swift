@@ -279,16 +279,36 @@ struct MonthHeaderView: View {
         let gridWidth = (CGFloat(numberOfWeeks - 1) * columnWidth) + cellSize
 
         ZStack(alignment: .topLeading) {
-            ForEach(monthLabels, id: \.index) { item in
-                Text(item.label)
-                    .font(.system(size: 11, weight: .semibold))
+            ForEach(monthLabels.indices, id: \.self) { labelIndex in
+                let item = monthLabels[labelIndex]
+                let isLastMonth = labelIndex == monthLabels.count - 1
+                let columnStartX = CGFloat(item.index) * columnWidth
+
+                // Determine display label, truncating last month if needed
+                let displayLabel: String = {
+                    if isLastMonth {
+                        // Calculate remaining space from this column to grid end
+                        let remainingWidth = gridWidth - columnStartX
+                        // Rough estimate: each character is about 6 points at size 10 semibold
+                        let estimatedLabelWidth = CGFloat(item.label.count) * 6.0
+
+                        if estimatedLabelWidth > remainingWidth {
+                            return String(item.label.prefix(1)) + "."
+                        }
+                    }
+                    return item.label
+                }()
+
+                Text(displayLabel)
+                    .font(.system(size: 10, weight: .semibold))
                     .foregroundStyle(
                         monthlyGoalMetDates.contains(item.monthStart)
                             ? habitColor
                             : Color.white.opacity(0.45)
                     )
                     .fixedSize()
-                    .position(x: (CGFloat(item.index) * columnWidth) + (cellSize / 2), y: 6)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+                    .offset(x: columnStartX, y: 0)
             }
         }
         .frame(width: gridWidth, height: 16, alignment: .leading)
