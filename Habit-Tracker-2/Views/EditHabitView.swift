@@ -328,10 +328,32 @@ struct EditHabitView: View {
     }
     
     private func deleteHabit() {
-        if let habit = habitToEdit {
-            modelContext.delete(habit)
-            dismiss()
+        guard let habit = habitToEdit else { return }
+
+        // Delete associated HabitOrder first
+        let habitId = habit.id
+        let descriptor = FetchDescriptor<HabitOrder>(
+            predicate: #Predicate<HabitOrder> { order in
+                order.habit.id == habitId
+            }
+        )
+
+        if let habitOrders = try? modelContext.fetch(descriptor),
+           let habitOrder = habitOrders.first {
+            modelContext.delete(habitOrder)
         }
+
+        // Delete the habit (this will cascade delete completions)
+        modelContext.delete(habit)
+
+        // Save the context
+        do {
+            try modelContext.save()
+        } catch {
+            assertionFailure("Failed to delete habit: \(error)")
+        }
+
+        dismiss()
     }
 }
 
