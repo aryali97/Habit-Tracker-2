@@ -39,9 +39,9 @@ final class Habit: Identifiable {
         icon: String = "star.fill",
         color: String = "#5C7CFA",
         completionsPerDay: Int = 1,
-        streakGoalValue: Int = 1,
-        streakGoalPeriod: StreakPeriod = .day,
-        streakGoalType: StreakGoalType = .dayBasis,
+        streakGoalValue: Int? = nil,
+        streakGoalPeriod: StreakPeriod? = nil,
+        streakGoalType: StreakGoalType? = nil,
         createdAt: Date = Date()
     ) {
         self.id = UUID()
@@ -49,10 +49,12 @@ final class Habit: Identifiable {
         self.habitDescription = habitDescription
         self.icon = icon
         self.color = color
-        self.completionsPerDay = max(1, completionsPerDay)
-        self.streakGoalValue = max(1, streakGoalValue)
-        self.streakGoalPeriod = streakGoalPeriod
-        self.streakGoalType = streakGoalType
+        let validCompletionsPerDay = max(1, completionsPerDay)
+        self.completionsPerDay = validCompletionsPerDay
+        // Default to daily goal matching completionsPerDay
+        self.streakGoalValue = streakGoalValue ?? validCompletionsPerDay
+        self.streakGoalPeriod = streakGoalPeriod ?? .day
+        self.streakGoalType = streakGoalType ?? .valueBasis
         self.createdAt = createdAt
     }
 }

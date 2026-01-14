@@ -62,7 +62,7 @@ struct HabitGridView: View {
     }
 
     private var goalEvaluator: GoalIndicatorEvaluator {
-        GoalIndicatorEvaluator(
+        return GoalIndicatorEvaluator(
             habitCreatedAt: habitCreatedAt,
             completionsByDate: completionsByDate,
             completionsPerDay: habit.completionsPerDay,
@@ -112,7 +112,7 @@ struct HabitGridView: View {
                         cellSpacing: cellSpacing,
                         habitColor: habitColor,
                         meetsGoalForWeek: { weekIndex in
-                            goalEvaluator.weekQualifies(weekIndex: weekIndex)
+                            return goalEvaluator.weekQualifies(weekIndex: weekIndex)
                         }
                     )
 
