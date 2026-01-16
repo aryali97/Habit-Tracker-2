@@ -448,7 +448,21 @@ struct CompletionPickerSheet: View {
         self.title = title
         self.onSave = onSave
         self._selectedCount = State(initialValue: currentCount)
-        self._stepSize = State(initialValue: habit.completionsPerDay > 10 ? 10 : 1)
+
+        // Set default step size based on daily goal
+        let defaultStep: Int
+        if habit.completionsPerDay <= 10 {
+            defaultStep = 1
+        } else if habit.completionsPerDay <= 25 {
+            defaultStep = 5
+        } else if habit.completionsPerDay <= 50 {
+            defaultStep = 10
+        } else if habit.completionsPerDay <= 100 {
+            defaultStep = 25
+        } else {
+            defaultStep = 50
+        }
+        self._stepSize = State(initialValue: defaultStep)
     }
 
     var body: some View {
