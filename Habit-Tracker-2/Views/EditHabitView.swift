@@ -87,7 +87,6 @@ struct EditHabitView: View {
                     }
                 }
                 .padding(.vertical)
-                .animation(.spring(duration: 0.4, bounce: 0.3), value: largerGoalPeriod)
             }
             .background(Color.black.edgesIgnoringSafeArea(.all))
             .navigationTitle("Edit Habit")
@@ -273,6 +272,7 @@ struct EditHabitView: View {
         .background(AppColors.cardBackground)
         .clipShape(RoundedRectangle(cornerRadius: 16))
         .animation(.spring(duration: 0.4, bounce: 0.3), value: largerGoalPeriod)
+        .animation(.spring(duration: 0.4, bounce: 0.3), value: completionsPerDay)
     }
     
     private var deleteButton: some View {
