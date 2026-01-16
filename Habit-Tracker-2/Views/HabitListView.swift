@@ -8,7 +8,7 @@ import SwiftData
 
 struct HabitListView: View {
     @Environment(\.modelContext) private var modelContext
-    @Query(sort: \Habit.createdAt) private var habits: [Habit]
+    @Query(sort: \Habit.habitStartDate) private var habits: [Habit]
     @Query(sort: \HabitOrder.orderIndex) private var habitOrders: [HabitOrder]
     @State private var showingAddHabit = false
     @State private var habitToEdit: Habit?
@@ -108,7 +108,7 @@ struct HabitListView: View {
             if leftOrder != rightOrder {
                 return leftOrder < rightOrder
             }
-            return $0.createdAt < $1.createdAt
+            return $0.habitStartDate < $1.habitStartDate
         }
     }
 
@@ -122,7 +122,7 @@ struct HabitListView: View {
             if leftOrder != rightOrder {
                 return leftOrder < rightOrder
             }
-            return $0.createdAt < $1.createdAt
+            return $0.habitStartDate < $1.habitStartDate
         }
 
         var nextIndex = 0
@@ -185,7 +185,7 @@ struct PreviewContainer {
             name: "Exercise",
             icon: "dumbbell",
             color: "#FF6B6B",
-            createdAt: oneMonthAgo
+            habitStartDate: oneMonthAgo
         )
         container.mainContext.insert(exerciseHabit)
 

@@ -35,7 +35,7 @@ final class Habit: Identifiable {
     var streakGoalValue: Int
     var streakGoalPeriod: StreakPeriod
     var streakGoalType: StreakGoalType
-    var createdAt: Date
+    var habitStartDate: Date
 
     @Relationship(deleteRule: .cascade, inverse: \HabitCompletion.habit)
     var completions: [HabitCompletion] = []
@@ -43,6 +43,27 @@ final class Habit: Identifiable {
     // Computed property to safely unwrap habitType with default
     var effectiveHabitType: HabitType {
         habitType ?? .build
+    }
+
+    /// Returns the earliest date between habitStartDate and the earliest completion
+    var effectiveStartDate: Date {
+        let calendar = Calendar.current
+        let startOfHabitDate = calendar.startOfDay(for: habitStartDate)
+
+        guard let earliestCompletion = completions.min(by: { $0.date < $1.date }) else {
+            return startOfHabitDate
+        }
+
+        let earliestCompletionDate = calendar.startOfDay(for: earliestCompletion.date)
+        return min(startOfHabitDate, earliestCompletionDate)
+    }
+
+    /// Syncs habitStartDate to match the earliest completion if needed
+    func syncStartDateToEarliestCompletion() {
+        let effective = effectiveStartDate
+        if effective < habitStartDate {
+            habitStartDate = effective
+        }
     }
 
     // Computed property to safely unwrap isBinary with default (based on completionsPerDay)
@@ -61,7 +82,7 @@ final class Habit: Identifiable {
         streakGoalValue: Int? = nil,
         streakGoalPeriod: StreakPeriod? = nil,
         streakGoalType: StreakGoalType? = nil,
-        createdAt: Date = Date()
+        habitStartDate: Date = Date()
     ) {
         self.id = UUID()
         self.name = name
@@ -76,6 +97,6 @@ final class Habit: Identifiable {
         self.streakGoalValue = streakGoalValue ?? validCompletionsPerDay
         self.streakGoalPeriod = streakGoalPeriod ?? .day
         self.streakGoalType = streakGoalType ?? .valueBasis
-        self.createdAt = createdAt
+        self.habitStartDate = habitStartDate
     }
 }

@@ -22,8 +22,8 @@ struct HabitMonthlyViewSheet: View {
         Color(hex: habit.color)
     }
 
-    private var habitCreatedAt: Date {
-        Calendar.current.startOfDay(for: habit.createdAt)
+    private var habitStartDate: Date {
+        Calendar.current.startOfDay(for: habit.effectiveStartDate)
     }
 
     private var completionsByDate: [Date: Int] {
@@ -116,7 +116,7 @@ struct HabitMonthlyViewSheet: View {
                         monthStart: Calendar.current.date(byAdding: .month, value: offset, to: currentMonthStart)
                             ?? currentMonthStart,
                         weekdaySymbols: weekdaySymbols,
-                        habitCreatedAt: habitCreatedAt,
+                        habitStartDate: habitStartDate,
                         completionsByDate: completionsByDate,
                         habitColor: habitColor,
                         habitType: habit.effectiveHabitType,
@@ -217,8 +217,8 @@ struct HabitMonthlyViewSheet: View {
             modelContext.insert(completion)
 
             // Update habit start date if this completion is earlier
-            if startOfDate < Calendar.current.startOfDay(for: habit.createdAt) {
-                habit.createdAt = startOfDate
+            if startOfDate < Calendar.current.startOfDay(for: habit.habitStartDate) {
+                habit.habitStartDate = startOfDate
             }
         }
 
@@ -237,7 +237,7 @@ struct HabitMonthlyViewSheet: View {
 private struct MonthCalendarPage: View {
     let monthStart: Date
     let weekdaySymbols: [String]
-    let habitCreatedAt: Date
+    let habitStartDate: Date
     let completionsByDate: [Date: Int]
     let habitColor: Color
     let habitType: HabitType
@@ -288,7 +288,7 @@ private struct MonthCalendarPage: View {
                         MonthlyDayCell(
                             date: date,
                             monthStart: monthStart,
-                            habitCreatedAt: habitCreatedAt,
+                            habitStartDate: habitStartDate,
                             completionCount: completionsByDate[Calendar.current.startOfDay(for: date)] ?? 0,
                             habitColor: habitColor,
                             habitType: habitType,
@@ -316,7 +316,7 @@ private struct MonthCalendarPage: View {
 private struct MonthlyDayCell: View {
     let date: Date
     let monthStart: Date
-    let habitCreatedAt: Date
+    let habitStartDate: Date
     let completionCount: Int
     let habitColor: Color
     let habitType: HabitType
@@ -333,7 +333,7 @@ private struct MonthlyDayCell: View {
     }
 
     private var isBeforeCreation: Bool {
-        date < habitCreatedAt
+        date < habitStartDate
     }
 
     private var numberOpacity: Double {
@@ -344,10 +344,13 @@ private struct MonthlyDayCell: View {
     }
 
     private var showsBackground: Bool {
+        // Don't show background for future dates
+        guard !isFuture else { return false }
+
         if habitType == .quit {
             // For quit habits: show background when within daily limit
-            // Only for valid tracking days (current month, not future, not before creation)
-            guard isCurrentMonth && !isFuture && !isBeforeCreation else {
+            // Only for valid tracking days (current month, not before creation)
+            guard isCurrentMonth && !isBeforeCreation else {
                 return false
             }
             return completionCount <= completionsPerDay
@@ -378,8 +381,10 @@ private struct MonthlyDayCell: View {
     }
 
     private var shouldShowCompletionMarkers: Bool {
-        // Show markers for any date within habit tracking period with nonzero uses
-        completionCount > 0 && !isFuture && !isBeforeCreation
+        // Show markers for any date with nonzero completions/uses (not future)
+        // For build habits: if there's data, show it
+        // For quit habits: same - any uses should show dots
+        completionCount > 0 && !isFuture
     }
 
     @ViewBuilder

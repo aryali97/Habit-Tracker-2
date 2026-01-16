@@ -27,8 +27,8 @@ struct HabitGridView: View {
         Color(hex: habit.color)
     }
 
-    private var habitCreatedAt: Date {
-        Calendar.current.startOfDay(for: habit.createdAt)
+    private var habitStartDate: Date {
+        Calendar.current.startOfDay(for: habit.effectiveStartDate)
     }
 
     private var gridEndDate: Date {
@@ -63,7 +63,7 @@ struct HabitGridView: View {
 
     private var goalEvaluator: GoalIndicatorEvaluator {
         return GoalIndicatorEvaluator(
-            habitCreatedAt: habitCreatedAt,
+            habitStartDate: habitStartDate,
             completionsByDate: completionsByDate,
             completionsPerDay: habit.completionsPerDay,
             habitType: habit.effectiveHabitType,
@@ -125,7 +125,7 @@ struct HabitGridView: View {
                                 completionsByDate: completionsByDate,
                                 completionsPerDay: habit.completionsPerDay,
                                 habitColor: habitColor,
-                                habitCreatedAt: habitCreatedAt,
+                                habitStartDate: habitStartDate,
                                 habitType: habit.effectiveHabitType,
                                 cellSize: cellSize,
                                 cellSpacing: cellSpacing
@@ -218,8 +218,8 @@ struct HabitGridView: View {
             modelContext.insert(completion)
 
             // Update habit start date if this completion is earlier
-            if startOfDate < Calendar.current.startOfDay(for: habit.createdAt) {
-                habit.createdAt = startOfDate
+            if startOfDate < Calendar.current.startOfDay(for: habit.habitStartDate) {
+                habit.habitStartDate = startOfDate
             }
         }
 
@@ -375,7 +375,7 @@ struct WeekColumn: View {
     let completionsByDate: [Date: Int]
     let completionsPerDay: Int
     let habitColor: Color
-    let habitCreatedAt: Date
+    let habitStartDate: Date
     let habitType: HabitType
     let cellSize: CGFloat
     let cellSpacing: CGFloat
@@ -393,7 +393,7 @@ struct WeekColumn: View {
                     count: count,
                     goal: completionsPerDay,
                     color: habitColor,
-                    habitCreatedAt: habitCreatedAt,
+                    habitStartDate: habitStartDate,
                     habitType: habitType,
                     size: cellSize
                 )
@@ -415,7 +415,7 @@ struct DayCell: View {
     let count: Int
     let goal: Int
     let color: Color
-    let habitCreatedAt: Date
+    let habitStartDate: Date
     let habitType: HabitType
     let size: CGFloat
 
@@ -428,7 +428,7 @@ struct DayCell: View {
     }
 
     private var isBeforeHabitCreation: Bool {
-        date < habitCreatedAt
+        date < habitStartDate
     }
 
     // Three states: inactive (darkest), failed (medium), completed (brightest)

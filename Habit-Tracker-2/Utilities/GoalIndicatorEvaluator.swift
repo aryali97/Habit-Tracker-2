@@ -6,7 +6,7 @@
 import Foundation
 
 struct GoalIndicatorEvaluator {
-    let habitCreatedAt: Date
+    let habitStartDate: Date
     let completionsByDate: [Date: Int]
     let completionsPerDay: Int
     let habitType: HabitType
@@ -19,7 +19,7 @@ struct GoalIndicatorEvaluator {
     let calendar: Calendar
 
     init(
-        habitCreatedAt: Date,
+        habitStartDate: Date,
         completionsByDate: [Date: Int],
         completionsPerDay: Int,
         habitType: HabitType,
@@ -31,7 +31,7 @@ struct GoalIndicatorEvaluator {
         today: Date = Calendar.current.startOfDay(for: Date()),
         calendar: Calendar = Calendar.current
     ) {
-        self.habitCreatedAt = habitCreatedAt
+        self.habitStartDate = habitStartDate
         self.completionsByDate = completionsByDate
         self.completionsPerDay = completionsPerDay
         self.habitType = habitType
@@ -58,7 +58,7 @@ struct GoalIndicatorEvaluator {
             }
 
             // Week must start after habit was created
-            guard weekStart >= habitCreatedAt else {
+            guard weekStart >= habitStartDate else {
                 return false
             }
         }
@@ -101,7 +101,7 @@ struct GoalIndicatorEvaluator {
             guard let date = calendar.date(byAdding: .day, value: offset, to: weekStart) else {
                 continue
             }
-            if date < habitCreatedAt {
+            if date < habitStartDate {
                 continue
             }
             hasActiveDay = true
@@ -143,7 +143,7 @@ struct GoalIndicatorEvaluator {
             guard let date = calendar.date(byAdding: .day, value: offset, to: monthStart) else {
                 continue
             }
-            if date < habitCreatedAt {
+            if date < habitStartDate {
                 continue
             }
             hasActiveDay = true
@@ -206,7 +206,7 @@ struct GoalIndicatorEvaluator {
             guard let date = calendar.date(byAdding: .day, value: offset, to: startDate) else {
                 continue
             }
-            if date < habitCreatedAt || date > today {
+            if date < habitStartDate || date > today {
                 continue
             }
             let count = completionsByDate[date] ?? 0
@@ -228,7 +228,7 @@ struct GoalIndicatorEvaluator {
             guard let date = calendar.date(byAdding: .day, value: offset, to: startDate) else {
                 continue
             }
-            if date < habitCreatedAt {
+            if date < habitStartDate {
                 continue
             }
             activeDayCount += 1

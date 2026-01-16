@@ -61,7 +61,7 @@ struct Habit_Tracker_2App: App {
             name: "Sample Habit",
             icon: "dumbbell",
             color: "#FF6B6B",
-            createdAt: oneMonthAgo
+            habitStartDate: oneMonthAgo
         )
         context.insert(sampleHabit)
 
