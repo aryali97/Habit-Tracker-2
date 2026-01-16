@@ -45,6 +45,7 @@ struct EditHabitView: View {
         _color = State(initialValue: habit?.color ?? HabitColors.default)
         let cPerDay = habit?.completionsPerDay ?? 1
         _completionsPerDay = State(initialValue: cPerDay)
+        _editMode = State(initialValue: habit?.effectiveHabitType == .quit ? .quit : .build)
 
         // If the habit's goal is set to daily with value matching completionsPerDay, treat as "None" in UI
         if let habit = habit,
@@ -134,6 +135,9 @@ struct EditHabitView: View {
                 .frame(width: 100, height: 100)
                 .background(Color(hex: color).opacity(0.2))
                 .clipShape(Circle())
+                .if(editMode == .quit) { view in
+                    view.slashOverlay(color: Color(hex: color))
+                }
         }
         .onTapGesture {
             showIconPicker = true
@@ -171,10 +175,12 @@ struct EditHabitView: View {
     private var dailyGoalSection: some View {
         HStack {
             VStack(alignment: .leading, spacing: 8) { // Increased spacing
-                Text("DAILY GOAL")
+                Text(editMode == .build ? "DAILY GOAL" : "DAILY LIMIT")
                     .font(.footnote).bold()
                     .foregroundStyle(.gray)
-                Text("Completions required per day")
+                Text(editMode == .build
+                    ? "Completions required per day"
+                    : "Maximum violations allowed per day")
                     .font(.caption)
                     .foregroundStyle(Color(UIColor.systemGray2))
             }
@@ -184,17 +190,25 @@ struct EditHabitView: View {
         .padding()
         .background(AppColors.cardBackground)
         .clipShape(RoundedRectangle(cornerRadius: 16))
+        .onChange(of: completionsPerDay) { oldValue, newValue in
+            // Binary habits (completionsPerDay == 1) can only use day basis
+            if newValue == 1 {
+                largerGoalType = .dayBasis
+            }
+        }
     }
 
     private var largerGoalSection: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
                 VStack(alignment: .leading, spacing: 8) {
-                    Text("LARGER GOAL")
+                    Text(editMode == .build ? "LARGER GOAL" : "LARGER LIMIT")
                         .font(.footnote).bold()
                         .foregroundStyle(.gray)
 
-                    Text("Long-term target frequency")
+                    Text(editMode == .build
+                        ? "Long-term target frequency"
+                        : "Long-term maximum allowance")
                         .font(.caption)
                         .foregroundStyle(Color(UIColor.systemGray2))
                 }
@@ -217,32 +231,35 @@ struct EditHabitView: View {
             .frame(height: 36)
 
             if largerGoalPeriod != nil {
-                HStack(spacing: 12) {
-                    BasisSelectionCard(
-                        icon: "calendar",
-                        title: "By Days",
-                        subtitle: "Complete on specific days of the period",
-                        isSelected: largerGoalType == .dayBasis
-                    )
-                    .onTapGesture {
-                        largerGoalType = .dayBasis
-                    }
+                // Only show basis selection for non-binary habits
+                if completionsPerDay > 1 {
+                    HStack(spacing: 12) {
+                        BasisSelectionCard(
+                            icon: "calendar",
+                            title: "By Days",
+                            subtitle: "Complete on specific days of the period",
+                            isSelected: largerGoalType == .dayBasis
+                        )
+                        .onTapGesture {
+                            largerGoalType = .dayBasis
+                        }
 
-                    BasisSelectionCard(
-                        icon: "chart.line.uptrend.xyaxis",
-                        title: "By Value",
-                        subtitle: "Reach a total sum across the period",
-                        isSelected: largerGoalType == .valueBasis
-                    )
-                    .onTapGesture {
-                        largerGoalType = .valueBasis
+                        BasisSelectionCard(
+                            icon: "chart.line.uptrend.xyaxis",
+                            title: "By Value",
+                            subtitle: "Reach a total sum across the period",
+                            isSelected: largerGoalType == .valueBasis
+                        )
+                        .onTapGesture {
+                            largerGoalType = .valueBasis
+                        }
                     }
+                    .padding(.top, 8)
+                    .transition(.asymmetric(
+                        insertion: .scale.combined(with: .opacity),
+                        removal: .scale.combined(with: .opacity)
+                    ))
                 }
-                .padding(.top, 8)
-                .transition(.asymmetric(
-                    insertion: .scale.combined(with: .opacity),
-                    removal: .scale.combined(with: .opacity)
-                ))
 
                 Text(streakDescription)
                     .font(.caption)
@@ -291,10 +308,21 @@ struct EditHabitView: View {
     private var streakDescription: String {
         guard let period = largerGoalPeriod else { return "" }
         let periodString = period.rawValue
-        if largerGoalType == .dayBasis {
-            return "Your streak will be maintained as long as you complete this habit on \(largerGoalValue) days within the \(periodString)."
+
+        if editMode == .quit {
+            // Quit habit description
+            if largerGoalType == .dayBasis {
+                return "Stay within limit on \(largerGoalValue) days within the \(periodString)."
+            } else {
+                return "Keep total violations under \(largerGoalValue) within the \(periodString)."
+            }
         } else {
-            return "Your streak will be maintained as long as you hit \(largerGoalValue) completions within the \(periodString)."
+            // Build habit description
+            if largerGoalType == .dayBasis {
+                return "Your streak will be maintained as long as you complete this habit on \(largerGoalValue) days within the \(periodString)."
+            } else {
+                return "Your streak will be maintained as long as you hit \(largerGoalValue) completions within the \(periodString)."
+            }
         }
     }
 
@@ -308,11 +336,14 @@ struct EditHabitView: View {
         habit.icon = icon
         habit.color = color
         habit.completionsPerDay = completionsPerDay
+        habit.habitType = editMode == .quit ? .quit : .build
+        habit.isBinary = completionsPerDay == 1
 
         if let period = largerGoalPeriod {
             habit.streakGoalPeriod = period
             habit.streakGoalValue = largerGoalValue
-            habit.streakGoalType = largerGoalType
+            // Binary habits can only use day basis
+            habit.streakGoalType = completionsPerDay == 1 ? .dayBasis : largerGoalType
         } else {
             // When "None" is selected, default to daily goal matching completionsPerDay
             habit.streakGoalPeriod = .day
@@ -375,9 +406,7 @@ fileprivate struct CustomSegmentedControl: View {
                     )
                     .foregroundStyle(selection == mode ? .black : .white)
                     .onTapGesture {
-                        if mode != .quit {
-                           selection = mode
-                        }
+                        selection = mode
                     }
             }
         }

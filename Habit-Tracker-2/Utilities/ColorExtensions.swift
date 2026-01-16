@@ -89,3 +89,42 @@ enum HabitOpacity {
         partialMin + (progress * (partialMax - partialMin))
     }
 }
+
+// MARK: - Slash Overlay for Quit Habits
+
+struct SlashOverlay: ViewModifier {
+    let color: Color
+
+    func body(content: Content) -> some View {
+        content
+            .overlay(
+                GeometryReader { geometry in
+                    let size = min(geometry.size.width, geometry.size.height)
+                    let lineWidth = max(2, size * 0.05)
+                    let lineLength = size * 1.05  // Slightly longer to fill the diameter
+
+                    Rectangle()
+                        .fill(color)
+                        .frame(width: lineWidth, height: lineLength)
+                        .rotationEffect(.degrees(45))
+                        .position(x: geometry.size.width / 2, y: geometry.size.height / 2)
+                }
+            )
+    }
+}
+
+extension View {
+    func slashOverlay(color: Color) -> some View {
+        modifier(SlashOverlay(color: color))
+    }
+
+    /// Conditionally apply a transformation to a view
+    @ViewBuilder
+    func `if`<Content: View>(_ condition: Bool, transform: (Self) -> Content) -> some View {
+        if condition {
+            transform(self)
+        } else {
+            self
+        }
+    }
+}

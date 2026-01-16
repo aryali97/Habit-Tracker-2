@@ -66,6 +66,7 @@ struct HabitGridView: View {
             habitCreatedAt: habitCreatedAt,
             completionsByDate: completionsByDate,
             completionsPerDay: habit.completionsPerDay,
+            habitType: habit.effectiveHabitType,
             streakGoalPeriod: habit.streakGoalPeriod,
             streakGoalValue: habit.streakGoalValue,
             streakGoalType: habit.streakGoalType,
@@ -125,6 +126,7 @@ struct HabitGridView: View {
                                 completionsPerDay: habit.completionsPerDay,
                                 habitColor: habitColor,
                                 habitCreatedAt: habitCreatedAt,
+                                habitType: habit.effectiveHabitType,
                                 cellSize: cellSize,
                                 cellSpacing: cellSpacing
                             )
@@ -344,12 +346,23 @@ struct PeriodTotals {
     let dayCount: Int
     let valueCount: Int
 
-    func meetsGoal(streakGoalValue: Int, streakGoalType: StreakGoalType) -> Bool {
-        switch streakGoalType {
-        case .dayBasis:
-            return dayCount >= streakGoalValue
-        case .valueBasis:
-            return valueCount >= streakGoalValue
+    func meetsGoal(streakGoalValue: Int, streakGoalType: StreakGoalType, habitType: HabitType) -> Bool {
+        if habitType == .quit {
+            // QUIT LOGIC: violations must be UNDER limit
+            switch streakGoalType {
+            case .dayBasis:
+                return dayCount <= streakGoalValue  // Days within limit
+            case .valueBasis:
+                return valueCount <= streakGoalValue  // Total violations under limit
+            }
+        } else {
+            // BUILD LOGIC: completions must be OVER goal
+            switch streakGoalType {
+            case .dayBasis:
+                return dayCount >= streakGoalValue
+            case .valueBasis:
+                return valueCount >= streakGoalValue
+            }
         }
     }
 }
@@ -363,6 +376,7 @@ struct WeekColumn: View {
     let completionsPerDay: Int
     let habitColor: Color
     let habitCreatedAt: Date
+    let habitType: HabitType
     let cellSize: CGFloat
     let cellSpacing: CGFloat
 
@@ -380,6 +394,7 @@ struct WeekColumn: View {
                     goal: completionsPerDay,
                     color: habitColor,
                     habitCreatedAt: habitCreatedAt,
+                    habitType: habitType,
                     size: cellSize
                 )
             }
@@ -401,6 +416,7 @@ struct DayCell: View {
     let goal: Int
     let color: Color
     let habitCreatedAt: Date
+    let habitType: HabitType
     let size: CGFloat
 
     private var today: Date {
@@ -422,19 +438,45 @@ struct DayCell: View {
             return HabitOpacity.inactive
         }
 
-        // Failed: after habit creation, in the past, but no completions
-        if count == 0 {
-            return HabitOpacity.failed
-        }
+        if habitType == .quit {
+            // QUIT LOGIC: inverted
 
-        // Completed: has completions
-        if count >= goal {
-            return HabitOpacity.completed
-        }
+            // Perfect day: 0 violations
+            if count == 0 {
+                return HabitOpacity.completed
+            }
 
-        // Partial completion: gradient based on progress
-        let progress = Double(count) / Double(goal)
-        return HabitOpacity.partial(progress: progress)
+            // Over limit: same as failed
+            if count > goal {
+                return HabitOpacity.failed
+            }
+
+            // At limit: dimmer
+            if count == goal {
+                return HabitOpacity.partialMin
+            }
+
+            // Partial violations: fewer violations = brighter (inverted progress)
+            let progress = 1.0 - (Double(count) / Double(goal))
+            return HabitOpacity.partial(progress: progress)
+
+        } else {
+            // BUILD LOGIC: existing
+
+            // Failed: after habit creation, in the past, but no completions
+            if count == 0 {
+                return HabitOpacity.failed
+            }
+
+            // Completed: has completions
+            if count >= goal {
+                return HabitOpacity.completed
+            }
+
+            // Partial completion: gradient based on progress
+            let progress = Double(count) / Double(goal)
+            return HabitOpacity.partial(progress: progress)
+        }
     }
 
     var body: some View {

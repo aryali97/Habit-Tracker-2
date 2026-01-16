@@ -9,6 +9,7 @@ struct GoalIndicatorEvaluator {
     let habitCreatedAt: Date
     let completionsByDate: [Date: Int]
     let completionsPerDay: Int
+    let habitType: HabitType
     let streakGoalPeriod: StreakPeriod
     let streakGoalValue: Int
     let streakGoalType: StreakGoalType
@@ -21,6 +22,7 @@ struct GoalIndicatorEvaluator {
         habitCreatedAt: Date,
         completionsByDate: [Date: Int],
         completionsPerDay: Int,
+        habitType: HabitType,
         streakGoalPeriod: StreakPeriod,
         streakGoalValue: Int,
         streakGoalType: StreakGoalType,
@@ -32,6 +34,7 @@ struct GoalIndicatorEvaluator {
         self.habitCreatedAt = habitCreatedAt
         self.completionsByDate = completionsByDate
         self.completionsPerDay = completionsPerDay
+        self.habitType = habitType
         self.streakGoalPeriod = streakGoalPeriod
         self.streakGoalValue = streakGoalValue
         self.streakGoalType = streakGoalType
@@ -42,11 +45,41 @@ struct GoalIndicatorEvaluator {
     }
 
     func weekQualifies(weekIndex: Int) -> Bool {
-        weekMeetsGoal(weekIndex: weekIndex) || weekAllDaysCompleted(weekIndex: weekIndex)
+        // For quit habits, only consider full weeks that are completely in the past
+        if habitType == .quit {
+            let weekStart = calendar.date(byAdding: .day, value: weekIndex * daysInWeek, to: gridStartDate)!
+            guard let weekEnd = calendar.date(byAdding: .day, value: daysInWeek - 1, to: weekStart) else {
+                return false
+            }
+
+            // Week must be completely in the past
+            guard weekEnd < today else {
+                return false
+            }
+
+            // Week must start after habit was created
+            guard weekStart >= habitCreatedAt else {
+                return false
+            }
+        }
+
+        return weekMeetsGoal(weekIndex: weekIndex) || weekAllDaysCompleted(weekIndex: weekIndex)
     }
 
     func monthQualifies(monthStart: Date) -> Bool {
-        monthMeetsGoal(monthStart: monthStart)
+        // For quit habits, only consider fully finished months
+        if habitType == .quit {
+            guard let monthEnd = calendar.date(byAdding: DateComponents(month: 1, day: -1), to: monthStart) else {
+                return false
+            }
+
+            // Month must be completely in the past
+            guard monthEnd < today else {
+                return false
+            }
+        }
+
+        return monthMeetsGoal(monthStart: monthStart)
             || monthAllDaysCompleted(monthStart: monthStart)
             || monthAllWeeksMeetGoal(monthStart: monthStart)
     }
@@ -57,7 +90,7 @@ struct GoalIndicatorEvaluator {
         }
         let weekStart = calendar.date(byAdding: .day, value: weekIndex * daysInWeek, to: gridStartDate)!
         let totals = periodTotals(startDate: weekStart, lengthInDays: daysInWeek)
-        return totals.meetsGoal(streakGoalValue: streakGoalValue, streakGoalType: streakGoalType)
+        return totals.meetsGoal(streakGoalValue: streakGoalValue, streakGoalType: streakGoalType, habitType: habitType)
     }
 
     private func weekAllDaysCompleted(weekIndex: Int) -> Bool {
@@ -73,7 +106,12 @@ struct GoalIndicatorEvaluator {
             }
             hasActiveDay = true
             let count = completionsByDate[date] ?? 0
-            if count < completionsPerDay {
+
+            let dayMeetsGoal = habitType == .quit
+                ? (count <= completionsPerDay)   // Quit: under limit
+                : (count >= completionsPerDay)   // Build: over goal
+
+            if !dayMeetsGoal {
                 return false
             }
         }
@@ -89,7 +127,7 @@ struct GoalIndicatorEvaluator {
             return false
         }
         let totals = periodTotals(startDate: monthStart, lengthInDays: dayRange.count)
-        return totals.meetsGoal(streakGoalValue: streakGoalValue, streakGoalType: streakGoalType)
+        return totals.meetsGoal(streakGoalValue: streakGoalValue, streakGoalType: streakGoalType, habitType: habitType)
     }
 
     private func monthAllDaysCompleted(monthStart: Date) -> Bool {
@@ -110,7 +148,12 @@ struct GoalIndicatorEvaluator {
             }
             hasActiveDay = true
             let count = completionsByDate[date] ?? 0
-            if count < completionsPerDay {
+
+            let dayMeetsGoal = habitType == .quit
+                ? (count <= completionsPerDay)
+                : (count >= completionsPerDay)
+
+            if !dayMeetsGoal {
                 return false
             }
         }
@@ -142,7 +185,8 @@ struct GoalIndicatorEvaluator {
                 hasActiveWeek = true
                 if !totalsResult.totals.meetsGoal(
                     streakGoalValue: streakGoalValue,
-                    streakGoalType: streakGoalType
+                    streakGoalType: streakGoalType,
+                    habitType: habitType
                 ) {
                     return false
                 }

@@ -84,6 +84,9 @@ struct HabitMonthlyViewSheet: View {
                     .frame(width: 36, height: 36)
                     .background(habitColor.opacity(HabitOpacity.inactive))
                     .clipShape(Circle())
+                    .if(habit.effectiveHabitType == .quit) { view in
+                        view.slashOverlay(color: habitColor)
+                    }
 
                 VStack(alignment: .leading, spacing: 2) {
                     Text(habit.name)

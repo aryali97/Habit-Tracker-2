@@ -33,6 +33,9 @@ struct HabitCardView: View {
                             .frame(width: 44, height: 44)
                             .background(habitColor.opacity(HabitOpacity.inactive))
                             .clipShape(Circle())
+                            .if(habit.effectiveHabitType == .quit) { view in
+                                view.slashOverlay(color: habitColor)
+                            }
                     }
                     .buttonStyle(PressScaleButtonStyle())
 
@@ -101,6 +104,7 @@ struct CompletionButtonView: View {
     let habit: Habit
     @Environment(\.modelContext) private var modelContext
     @State private var showingPicker = false
+    @GestureState private var isPressed = false
 
     private var habitColor: Color {
         Color(hex: habit.color)
@@ -112,8 +116,14 @@ struct CompletionButtonView: View {
     }
 
     private var isCompletedToday: Bool {
-        guard let completion = todayCompletion else { return false }
-        return completion.count >= habit.completionsPerDay
+        guard let completion = todayCompletion else {
+            return habit.effectiveHabitType == .quit  // Quit: no violations = complete
+        }
+        if habit.effectiveHabitType == .quit {
+            return completion.count == 0
+        } else {
+            return completion.count >= habit.completionsPerDay
+        }
     }
 
     private var todayCount: Int {
@@ -121,12 +131,12 @@ struct CompletionButtonView: View {
     }
 
     private var usesPickerOnTap: Bool {
-        habit.completionsPerDay > 10
+        !habit.effectiveIsBinary && (habit.completionsPerDay > 10 || (habit.habitType == .quit && todayCount >= habit.completionsPerDay))
     }
 
     var body: some View {
         Group {
-            if habit.completionsPerDay == 1 {
+            if habit.effectiveIsBinary {
                 // Checkmark button for once-per-day habits
                 Button(action: toggleCompletion) {
                     Image(systemName: "checkmark")
@@ -161,8 +171,12 @@ struct CompletionButtonView: View {
                         goal: habit.completionsPerDay,
                         color: habitColor,
                         isComplete: isCompletedToday,
+                        habitType: habit.effectiveHabitType,
                         onTap: {
                             if usesPickerOnTap {
+                                showingPicker = true
+                            } else if habit.effectiveHabitType == .quit && todayCount >= habit.completionsPerDay {
+                                // Quit habit at limit: open picker
                                 showingPicker = true
                             } else {
                                 incrementCompletion()
@@ -174,23 +188,42 @@ struct CompletionButtonView: View {
                     .scaleEffect(isCompletedToday ? 0.9 : 1)
                     .allowsHitTesting(!isCompletedToday)
 
-                    Button {
-                        if usesPickerOnTap {
-                            showingPicker = true
-                        } else {
-                            resetCompletion()
-                        }
-                    } label: {
-                        Image(systemName: "checkmark")
-                            .font(.system(size: 16, weight: .bold))
-                            .symbolEffect(.bounce, options: .speed(2.8), value: isCompletedToday)
-                            .foregroundStyle(.white)
-                            .frame(width: 44, height: 44)
-                            .background(habitColor)
-                            .clipShape(Circle())
-                            .shadow(color: habitColor.opacity(0.45), radius: 10, x: 0, y: 6)
-                    }
-                    .buttonStyle(PressScaleButtonStyle())
+                    Image(systemName: "checkmark")
+                        .font(.system(size: 16, weight: .bold))
+                        .symbolEffect(.bounce, options: .speed(2.8), value: isCompletedToday)
+                        .foregroundStyle(.white)
+                        .frame(width: 44, height: 44)
+                        .background(habitColor)
+                        .clipShape(Circle())
+                        .shadow(color: habitColor.opacity(0.45), radius: 10, x: 0, y: 6)
+                        .scaleEffect(isPressed ? 0.95 : 1.0)
+                        .contentShape(Circle())
+                        .gesture(
+                            LongPressGesture(minimumDuration: 0.5)
+                                .onEnded { _ in
+                                    Haptics.impact(.medium)
+                                    showingPicker = true
+                                }
+                                .sequenced(before: TapGesture())
+                                .exclusively(before: TapGesture().onEnded { _ in
+                                    Haptics.impact(.light)
+                                    if usesPickerOnTap {
+                                        showingPicker = true
+                                    } else if habit.effectiveHabitType == .quit {
+                                        // Quit habit at 0 violations: increment to 1 violation
+                                        incrementCompletion()
+                                    } else {
+                                        // Build habit: reset to 0
+                                        resetCompletion()
+                                    }
+                                })
+                        )
+                        .simultaneousGesture(
+                            DragGesture(minimumDistance: 0)
+                                .updating($isPressed) { _, state, _ in
+                                    state = true
+                                }
+                        )
                     .opacity(isCompletedToday ? 1 : 0)
                     .scaleEffect(isCompletedToday ? 1 : 0.9)
                     .allowsHitTesting(isCompletedToday)
@@ -288,6 +321,7 @@ struct SegmentedProgressButton: View {
     let goal: Int
     let color: Color
     let isComplete: Bool
+    let habitType: HabitType
     let onTap: () -> Void
     let onLongPress: () -> Void
     @GestureState private var isPressed = false
@@ -310,7 +344,9 @@ struct SegmentedProgressButton: View {
 
                 // Filled arc (capped at 100%)
                 Circle()
-                    .trim(from: 0, to: min(Double(count) / Double(goal), 1.0))
+                    .trim(from: 0, to: habitType == .quit
+                        ? max(0, 1.0 - Double(count) / Double(goal))  // Decreases as violations increase
+                        : min(Double(count) / Double(goal), 1.0))     // Normal for build
                     .stroke(color, style: StrokeStyle(lineWidth: lineWidth, lineCap: .round))
                     .frame(width: size - lineWidth, height: size - lineWidth)
                     .rotationEffect(.degrees(-90))
@@ -321,15 +357,25 @@ struct SegmentedProgressButton: View {
                         .stroke(color.opacity(HabitOpacity.failed), lineWidth: lineWidth)
                 }
 
-                // Filled segments (capped at goal)
-                ForEach(0..<min(count, goal), id: \.self) { index in
-                    segmentArc(index: index, filled: true)
-                        .stroke(color, style: StrokeStyle(lineWidth: lineWidth, lineCap: .round))
+                // Filled segments
+                if habitType == .quit {
+                    // For quit: show filled segments from top, removing as count increases
+                    let segmentsToShow = max(0, goal - count)
+                    ForEach(0..<segmentsToShow, id: \.self) { index in
+                        segmentArc(index: index, filled: true)
+                            .stroke(color, style: StrokeStyle(lineWidth: lineWidth, lineCap: .round))
+                    }
+                } else {
+                    // For build: show filled segments progressively (capped at goal)
+                    ForEach(0..<min(count, goal), id: \.self) { index in
+                        segmentArc(index: index, filled: true)
+                            .stroke(color, style: StrokeStyle(lineWidth: lineWidth, lineCap: .round))
+                    }
                 }
             }
 
-            // Plus icon
-            Image(systemName: "plus")
+            // Plus/Minus icon
+            Image(systemName: habitType == .quit ? "minus" : "plus")
                 .font(.system(size: 14, weight: .bold))
                 .foregroundStyle(color)
         }
@@ -416,6 +462,9 @@ struct CompletionPickerSheet: View {
                         .frame(width: 64, height: 64)
                         .background(habitColor.opacity(HabitOpacity.inactive))
                         .clipShape(Circle())
+                        .if(habit.effectiveHabitType == .quit) { view in
+                            view.slashOverlay(color: habitColor)
+                        }
 
                     VStack(alignment: .leading) {
                         Text(habit.name)
@@ -443,7 +492,9 @@ struct CompletionPickerSheet: View {
 
                         // Filled arc (capped at 100%)
                         Circle()
-                            .trim(from: 0, to: min(Double(selectedCount) / Double(habit.completionsPerDay), 1.0))
+                            .trim(from: 0, to: habit.effectiveHabitType == .quit
+                                ? max(0, 1.0 - Double(selectedCount) / Double(habit.completionsPerDay))
+                                : min(Double(selectedCount) / Double(habit.completionsPerDay), 1.0))
                             .stroke(habitColor, style: StrokeStyle(lineWidth: 8, lineCap: .round))
                             .frame(width: 172, height: 172)
                             .rotationEffect(.degrees(-90))
@@ -462,24 +513,59 @@ struct CompletionPickerSheet: View {
                             )
                         }
 
-                        // Filled segments (capped at goal)
-                        ForEach(0..<min(selectedCount, habit.completionsPerDay), id: \.self) { index in
-                            LargeSegmentArc(
-                                index: index,
-                                total: habit.completionsPerDay,
-                                size: 180
-                            )
-                            .stroke(habitColor, style: StrokeStyle(lineWidth: 8, lineCap: .round))
+                        // Filled segments
+                        if habit.effectiveHabitType == .quit {
+                            // For quit: show filled segments from top, removing as count increases
+                            let segmentsToShow = max(0, habit.completionsPerDay - selectedCount)
+                            ForEach(0..<segmentsToShow, id: \.self) { index in
+                                LargeSegmentArc(
+                                    index: index,
+                                    total: habit.completionsPerDay,
+                                    size: 180
+                                )
+                                .stroke(habitColor, style: StrokeStyle(lineWidth: 8, lineCap: .round))
+                            }
+                        } else {
+                            // For build: show filled segments progressively (capped at goal)
+                            ForEach(0..<min(selectedCount, habit.completionsPerDay), id: \.self) { index in
+                                LargeSegmentArc(
+                                    index: index,
+                                    total: habit.completionsPerDay,
+                                    size: 180
+                                )
+                                .stroke(habitColor, style: StrokeStyle(lineWidth: 8, lineCap: .round))
+                            }
                         }
                     }
 
                     // Count display
                     VStack(spacing: 4) {
-                        Text("\(selectedCount)")
+                        Text({
+                            if habit.effectiveHabitType == .quit {
+                                let remaining = habit.completionsPerDay - selectedCount
+                                return "\(abs(remaining))"
+                            } else {
+                                return "\(selectedCount)"
+                            }
+                        }())
                             .font(.system(size: 48, weight: .bold, design: .rounded))
-                            .foregroundStyle(habitColor)
+                            .foregroundStyle(
+                                habit.effectiveHabitType == .quit && selectedCount > habit.completionsPerDay
+                                    ? Color.red
+                                    : habitColor
+                            )
 
-                        Text("of \(habit.completionsPerDay)")
+                        Text({
+                            if habit.effectiveHabitType == .quit {
+                                if selectedCount <= habit.completionsPerDay {
+                                    return "left"
+                                } else {
+                                    return "over limit"
+                                }
+                            } else {
+                                return "of \(habit.completionsPerDay)"
+                            }
+                        }())
                             .font(.subheadline)
                             .foregroundStyle(.secondary)
                     }
@@ -488,12 +574,23 @@ struct CompletionPickerSheet: View {
 
                 // Stepper controls
                 HStack(spacing: 12) {
-                    let canDecrement = selectedCount > 0
+                    // For quit habits: minus adds violations (increases count)
+                    // For build habits: minus removes completions (decreases count)
+                    let canDecrement = habit.effectiveHabitType == .quit ? true : selectedCount > 0
                     Button {
-                        guard canDecrement else { return }
-                        let nextValue = max(selectedCount - stepSize, 0)
-                        withAnimation(.interpolatingSpring(stiffness: 260, damping: 22)) {
-                            selectedCount = nextValue
+                        if habit.effectiveHabitType == .quit {
+                            // Quit: minus adds violations
+                            let nextValue = selectedCount + stepSize
+                            withAnimation(.interpolatingSpring(stiffness: 260, damping: 22)) {
+                                selectedCount = nextValue
+                            }
+                        } else {
+                            // Build: minus removes completions
+                            guard selectedCount > 0 else { return }
+                            let nextValue = max(selectedCount - stepSize, 0)
+                            withAnimation(.interpolatingSpring(stiffness: 260, damping: 22)) {
+                                selectedCount = nextValue
+                            }
                         }
                         Haptics.impact(.light)
                     } label: {
@@ -523,10 +620,23 @@ struct CompletionPickerSheet: View {
                         .buttonStyle(.plain)
                     }
 
+                    // For quit habits: plus removes violations (decreases count)
+                    // For build habits: plus adds completions (increases count)
+                    let canIncrement = habit.effectiveHabitType == .quit ? selectedCount > 0 : true
                     Button {
-                        let nextValue = selectedCount + stepSize
-                        withAnimation(.interpolatingSpring(stiffness: 260, damping: 22)) {
-                            selectedCount = nextValue
+                        if habit.effectiveHabitType == .quit {
+                            // Quit: plus removes violations
+                            guard selectedCount > 0 else { return }
+                            let nextValue = max(selectedCount - stepSize, 0)
+                            withAnimation(.interpolatingSpring(stiffness: 260, damping: 22)) {
+                                selectedCount = nextValue
+                            }
+                        } else {
+                            // Build: plus adds completions
+                            let nextValue = selectedCount + stepSize
+                            withAnimation(.interpolatingSpring(stiffness: 260, damping: 22)) {
+                                selectedCount = nextValue
+                            }
                         }
                         Haptics.impact(.light)
                     } label: {
@@ -537,6 +647,8 @@ struct CompletionPickerSheet: View {
                             .background(habitColor)
                             .clipShape(Circle())
                     }
+                    .disabled(!canIncrement)
+                    .opacity(canIncrement ? 1 : 0.45)
                 }
                 .padding(.horizontal, 8)
                 .padding(.vertical, 8)
