@@ -119,6 +119,8 @@ struct HabitMonthlyViewSheet: View {
                         habitCreatedAt: habitCreatedAt,
                         completionsByDate: completionsByDate,
                         habitColor: habitColor,
+                        habitType: habit.effectiveHabitType,
+                        completionsPerDay: habit.completionsPerDay,
                         onSelectDate: { date in
                             handleDateTap(date)
                         }
@@ -238,6 +240,8 @@ private struct MonthCalendarPage: View {
     let habitCreatedAt: Date
     let completionsByDate: [Date: Int]
     let habitColor: Color
+    let habitType: HabitType
+    let completionsPerDay: Int
     let onSelectDate: (Date) -> Void
 
     private var monthTitle: String {
@@ -286,7 +290,9 @@ private struct MonthCalendarPage: View {
                             monthStart: monthStart,
                             habitCreatedAt: habitCreatedAt,
                             completionCount: completionsByDate[Calendar.current.startOfDay(for: date)] ?? 0,
-                            habitColor: habitColor
+                            habitColor: habitColor,
+                            habitType: habitType,
+                            completionsPerDay: completionsPerDay
                         )
                     }
                     .buttonStyle(.plain)
@@ -313,6 +319,8 @@ private struct MonthlyDayCell: View {
     let habitCreatedAt: Date
     let completionCount: Int
     let habitColor: Color
+    let habitType: HabitType
+    let completionsPerDay: Int
 
     private var calendar: Calendar { Calendar.current }
 
@@ -336,7 +344,17 @@ private struct MonthlyDayCell: View {
     }
 
     private var showsBackground: Bool {
-        completionCount > 0
+        if habitType == .quit {
+            // For quit habits: show background when within daily limit
+            // Only for valid tracking days (current month, not future, not before creation)
+            guard isCurrentMonth && !isFuture && !isBeforeCreation else {
+                return false
+            }
+            return completionCount <= completionsPerDay
+        } else {
+            // For build habits: show background when any completions
+            return completionCount > 0
+        }
     }
 
     var body: some View {
@@ -360,7 +378,8 @@ private struct MonthlyDayCell: View {
     }
 
     private var shouldShowCompletionMarkers: Bool {
-        completionCount > 0 && isCurrentMonth && !isFuture
+        // Show markers for any date within habit tracking period with nonzero uses
+        completionCount > 0 && !isFuture && !isBeforeCreation
     }
 
     @ViewBuilder
