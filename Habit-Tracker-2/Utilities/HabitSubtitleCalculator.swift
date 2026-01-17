@@ -173,11 +173,20 @@ struct HabitSubtitleCalculator {
 
     private func calculateWeeklyStreak() -> (Int, StreakPeriod)? {
         var streakCount = 0
+        let isQuit = habit.effectiveHabitType == .quit
 
-        // Start from the week BEFORE current week
-        guard let currentWeekStart = calendar.dateInterval(of: .weekOfYear, for: today)?.start,
-              var checkWeekStart = calendar.date(byAdding: .weekOfYear, value: -1, to: currentWeekStart) else {
+        guard let currentWeekStart = calendar.dateInterval(of: .weekOfYear, for: today)?.start else {
             return nil
+        }
+
+        // For build habits, check if current week already meets the goal
+        if !isQuit && evaluateWeek(startingAt: currentWeekStart) {
+            streakCount += 1
+        }
+
+        // Then count previous complete weeks
+        guard var checkWeekStart = calendar.date(byAdding: .weekOfYear, value: -1, to: currentWeekStart) else {
+            return streakCount > 0 ? (streakCount, .week) : nil
         }
 
         while true {
@@ -197,11 +206,18 @@ struct HabitSubtitleCalculator {
 
     private func calculateMonthlyStreak() -> (Int, StreakPeriod)? {
         var streakCount = 0
+        let isQuit = habit.effectiveHabitType == .quit
 
-        // Start from the month BEFORE current month
         let currentMonthStart = calendar.date(from: calendar.dateComponents([.year, .month], from: today))!
+
+        // For build habits, check if current month already meets the goal
+        if !isQuit && evaluateMonth(startingAt: currentMonthStart) {
+            streakCount += 1
+        }
+
+        // Then count previous complete months
         guard var checkMonthStart = calendar.date(byAdding: .month, value: -1, to: currentMonthStart) else {
-            return nil
+            return streakCount > 0 ? (streakCount, .month) : nil
         }
 
         while true {

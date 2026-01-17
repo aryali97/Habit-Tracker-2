@@ -297,6 +297,71 @@ final class HabitSubtitleCalculatorTests: XCTestCase {
         XCTAssertEqual(subtitle.secondaryStyle, .streak)
     }
 
+    func testStreak_weeklyCurrentWeekMeetsGoal() {
+        // Build habit should show "1 week streak" when current week already meets goal
+        let habit = makeHabit(
+            completionsPerDay: 1,
+            streakGoalPeriod: .week,
+            streakGoalValue: 3,
+            streakGoalType: .dayBasis,
+            habitStartDate: date(2026, 1, 1)
+        )
+        let today = date(2026, 1, 15)  // Wednesday
+
+        // Complete 3 days in the current week only (no previous weeks)
+        // Include today since streaks require today to be complete
+        var completions: [Date: Int] = [:]
+        let currentWeekStart = calendar.dateInterval(of: .weekOfYear, for: today)!.start
+        for dayOffset in 0..<2 {
+            let day = calendar.date(byAdding: .day, value: dayOffset, to: currentWeekStart)!
+            completions[day] = 1
+        }
+        completions[today] = 1  // Today must be complete
+
+        let calc = calculator(habit: habit, completionsByDate: completions, today: today)
+        let subtitle = calc.calculate()
+
+        XCTAssertEqual(subtitle.secondaryText, "1 week streak")
+        XCTAssertEqual(subtitle.secondaryStyle, .streak)
+    }
+
+    func testStreak_weeklyCurrentWeekPlusPreviousWeeks() {
+        // Build habit should count current week + previous weeks when all meet goal
+        let habit = makeHabit(
+            completionsPerDay: 1,
+            streakGoalPeriod: .week,
+            streakGoalValue: 3,
+            streakGoalType: .dayBasis,
+            habitStartDate: date(2025, 12, 1)
+        )
+        let today = date(2026, 1, 15)
+
+        var completions: [Date: Int] = [:]
+        let currentWeekStart = calendar.dateInterval(of: .weekOfYear, for: today)!.start
+
+        // Complete 2 days at week start + today in current week
+        for dayOffset in 0..<2 {
+            let day = calendar.date(byAdding: .day, value: dayOffset, to: currentWeekStart)!
+            completions[day] = 1
+        }
+        completions[today] = 1  // Today must be complete
+
+        // Complete 3 days in previous 2 weeks
+        for weekOffset in 1...2 {
+            let weekStart = calendar.date(byAdding: .weekOfYear, value: -weekOffset, to: currentWeekStart)!
+            for dayOffset in 0..<3 {
+                let day = calendar.date(byAdding: .day, value: dayOffset, to: weekStart)!
+                completions[day] = 1
+            }
+        }
+
+        let calc = calculator(habit: habit, completionsByDate: completions, today: today)
+        let subtitle = calc.calculate()
+
+        XCTAssertEqual(subtitle.secondaryText, "3 week streak")
+        XCTAssertEqual(subtitle.secondaryStyle, .streak)
+    }
+
     func testStreak_monthlyConsecutive() {
         let habit = makeHabit(
             completionsPerDay: 1,
@@ -323,6 +388,71 @@ final class HabitSubtitleCalculatorTests: XCTestCase {
         let subtitle = calc.calculate()
 
         XCTAssertEqual(subtitle.secondaryText, "2 month streak")
+        XCTAssertEqual(subtitle.secondaryStyle, .streak)
+    }
+
+    func testStreak_monthlyCurrentMonthMeetsGoal() {
+        // Build habit should show "1 month streak" when current month already meets goal
+        let habit = makeHabit(
+            completionsPerDay: 1,
+            streakGoalPeriod: .month,
+            streakGoalValue: 10,
+            streakGoalType: .dayBasis,
+            habitStartDate: date(2026, 1, 1)
+        )
+        let today = date(2026, 1, 15)
+
+        // Complete 10 days in current month (including today)
+        var completions: [Date: Int] = [:]
+        for dayOffset in 1...9 {
+            let day = date(2026, 1, dayOffset)
+            completions[day] = 1
+        }
+        completions[today] = 1  // Today must be complete
+
+        let calc = calculator(habit: habit, completionsByDate: completions, today: today)
+        let subtitle = calc.calculate()
+
+        XCTAssertEqual(subtitle.secondaryText, "1 month streak")
+        XCTAssertEqual(subtitle.secondaryStyle, .streak)
+    }
+
+    func testStreak_monthlyCurrentMonthPlusPreviousMonths() {
+        // Build habit should count current month + previous months when all meet goal
+        let habit = makeHabit(
+            completionsPerDay: 1,
+            streakGoalPeriod: .month,
+            streakGoalValue: 10,
+            streakGoalType: .dayBasis,
+            habitStartDate: date(2025, 10, 1)
+        )
+        let today = date(2026, 1, 15)
+
+        var completions: [Date: Int] = [:]
+
+        // Complete 10 days in current month (January 2026), including today
+        for dayOffset in 1...9 {
+            let day = date(2026, 1, dayOffset)
+            completions[day] = 1
+        }
+        completions[today] = 1  // Today must be complete
+
+        // Complete 10 days in December 2025
+        for dayOffset in 1...10 {
+            let day = date(2025, 12, dayOffset)
+            completions[day] = 1
+        }
+
+        // Complete 10 days in November 2025
+        for dayOffset in 1...10 {
+            let day = date(2025, 11, dayOffset)
+            completions[day] = 1
+        }
+
+        let calc = calculator(habit: habit, completionsByDate: completions, today: today)
+        let subtitle = calc.calculate()
+
+        XCTAssertEqual(subtitle.secondaryText, "3 month streak")
         XCTAssertEqual(subtitle.secondaryStyle, .streak)
     }
 
