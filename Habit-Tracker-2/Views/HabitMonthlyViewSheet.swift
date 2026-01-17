@@ -121,8 +121,12 @@ struct HabitMonthlyViewSheet: View {
                         habitColor: habitColor,
                         habitType: habit.effectiveHabitType,
                         completionsPerDay: habit.completionsPerDay,
+                        isBinary: habit.effectiveIsBinary,
                         onSelectDate: { date in
                             handleDateTap(date)
+                        },
+                        onLongPressDate: { date in
+                            handleDateLongPress(date)
                         }
                     )
                     .tag(offset)
@@ -177,29 +181,38 @@ struct HabitMonthlyViewSheet: View {
 
     private func handleDateTap(_ date: Date) {
         let startOfDate = Calendar.current.startOfDay(for: date)
+        let currentCount = completionCount(for: startOfDate)
 
-        if habit.completionsPerDay == 1 {
-            toggleCompletion(for: startOfDate)
-        } else if habit.completionsPerDay <= 10 {
-            cycleCompletion(for: startOfDate)
-        } else {
+        let action = CompletionInteractionHelper.tapAction(for: habit, currentCount: currentCount)
+
+        switch action {
+        case .toggle:
+            let isCompleting = currentCount == 0
+            Haptics.impact(isCompleting ? .medium : .light)
+            setCompletionCount(isCompleting ? 1 : 0, for: startOfDate)
+
+        case .increment:
+            let nextCount = CompletionInteractionHelper.incrementedCount(from: currentCount, for: habit)
+            let impactStyle: Haptics.ImpactStyle = nextCount >= habit.completionsPerDay ? .medium : .light
+            Haptics.impact(impactStyle)
+            setCompletionCount(nextCount, for: startOfDate)
+
+        case .reset:
+            Haptics.impact(.light)
+            setCompletionCount(0, for: startOfDate)
+
+        case .showPicker:
             onShowCompletionPicker(startOfDate)
         }
     }
 
-    private func toggleCompletion(for date: Date) {
-        let currentCount = completionCount(for: date)
-        let isCompleting = currentCount == 0
-        Haptics.impact(isCompleting ? .medium : .light)
-        setCompletionCount(isCompleting ? 1 : 0, for: date)
-    }
+    private func handleDateLongPress(_ date: Date) {
+        let startOfDate = Calendar.current.startOfDay(for: date)
 
-    private func cycleCompletion(for date: Date) {
-        let currentCount = completionCount(for: date)
-        let nextCount = currentCount >= habit.completionsPerDay ? 0 : currentCount + 1
-        let impactStyle: Haptics.ImpactStyle = nextCount == 0 ? .light : (nextCount >= habit.completionsPerDay ? .medium : .light)
-        Haptics.impact(impactStyle)
-        setCompletionCount(nextCount, for: date)
+        if CompletionInteractionHelper.shouldShowPickerOnLongPress(for: habit) {
+            Haptics.impact(.medium)
+            onShowCompletionPicker(startOfDate)
+        }
     }
 
     private func completionCount(for date: Date) -> Int {
@@ -242,7 +255,9 @@ private struct MonthCalendarPage: View {
     let habitColor: Color
     let habitType: HabitType
     let completionsPerDay: Int
+    let isBinary: Bool
     let onSelectDate: (Date) -> Void
+    let onLongPressDate: (Date) -> Void
 
     private var monthTitle: String {
         let formatter = DateFormatter()
@@ -282,21 +297,19 @@ private struct MonthCalendarPage: View {
             LazyVGrid(columns: columns, spacing: 8) {
                 ForEach(gridDates, id: \.self) { date in
                     let isInteractive = canInteract(with: date)
-                    Button {
-                        onSelectDate(date)
-                    } label: {
-                        MonthlyDayCell(
-                            date: date,
-                            monthStart: monthStart,
-                            habitStartDate: habitStartDate,
-                            completionCount: completionsByDate[Calendar.current.startOfDay(for: date)] ?? 0,
-                            habitColor: habitColor,
-                            habitType: habitType,
-                            completionsPerDay: completionsPerDay
-                        )
-                    }
-                    .buttonStyle(.plain)
-                    .disabled(!isInteractive)
+                    CalendarDayCellButton(
+                        date: date,
+                        monthStart: monthStart,
+                        habitStartDate: habitStartDate,
+                        completionCount: completionsByDate[Calendar.current.startOfDay(for: date)] ?? 0,
+                        habitColor: habitColor,
+                        habitType: habitType,
+                        completionsPerDay: completionsPerDay,
+                        isBinary: isBinary,
+                        isInteractive: isInteractive,
+                        onTap: { onSelectDate(date) },
+                        onLongPress: { onLongPressDate(date) }
+                    )
                 }
             }
         }
@@ -310,6 +323,60 @@ private struct MonthCalendarPage: View {
         let isCurrentMonth = calendar.isDate(date, equalTo: monthStart, toGranularity: .month)
         let isFuture = startOfDate > calendar.startOfDay(for: Date())
         return isCurrentMonth && !isFuture
+    }
+}
+
+private struct CalendarDayCellButton: View {
+    let date: Date
+    let monthStart: Date
+    let habitStartDate: Date
+    let completionCount: Int
+    let habitColor: Color
+    let habitType: HabitType
+    let completionsPerDay: Int
+    let isBinary: Bool
+    let isInteractive: Bool
+    let onTap: () -> Void
+    let onLongPress: () -> Void
+
+    @GestureState private var isPressed = false
+
+    var body: some View {
+        MonthlyDayCell(
+            date: date,
+            monthStart: monthStart,
+            habitStartDate: habitStartDate,
+            completionCount: completionCount,
+            habitColor: habitColor,
+            habitType: habitType,
+            completionsPerDay: completionsPerDay
+        )
+        .scaleEffect(isPressed ? 0.92 : 1.0)
+        .animation(.easeOut(duration: 0.12), value: isPressed)
+        .contentShape(Rectangle())
+        .highPriorityGesture(
+            LongPressGesture(minimumDuration: 0.5)
+                .onEnded { _ in
+                    guard isInteractive, !isBinary else { return }
+                    onLongPress()
+                }
+        )
+        .simultaneousGesture(
+            TapGesture()
+                .onEnded {
+                    guard isInteractive else { return }
+                    onTap()
+                }
+        )
+        .simultaneousGesture(
+            DragGesture(minimumDistance: 0)
+                .updating($isPressed) { _, state, _ in
+                    if isInteractive {
+                        state = true
+                    }
+                }
+        )
+        .allowsHitTesting(isInteractive)
     }
 }
 
