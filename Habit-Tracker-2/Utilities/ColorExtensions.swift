@@ -113,9 +113,46 @@ struct SlashOverlay: ViewModifier {
     }
 }
 
+struct AnimatedSlashOverlay: ViewModifier {
+    let color: Color
+    let isVisible: Bool
+
+    func body(content: Content) -> some View {
+        content
+            .overlay(
+                GeometryReader { geometry in
+                    let size = min(geometry.size.width, geometry.size.height)
+                    let lineWidth = max(2, size * 0.05)
+
+                    SlashLine()
+                        .trim(from: 0, to: isVisible ? 1 : 0)
+                        .stroke(color, style: StrokeStyle(lineWidth: lineWidth, lineCap: .round))
+                        .frame(width: size, height: size)
+                        .clipShape(Circle())
+                        .position(x: geometry.size.width / 2, y: geometry.size.height / 2)
+                        .animation(.easeInOut(duration: 0.25), value: isVisible)
+                }
+            )
+    }
+}
+
+struct SlashLine: Shape {
+    func path(in rect: CGRect) -> Path {
+        var path = Path()
+        // Draw from top-right to bottom-left (45 degree diagonal)
+        path.move(to: CGPoint(x: rect.maxX, y: rect.minY))
+        path.addLine(to: CGPoint(x: rect.minX, y: rect.maxY))
+        return path
+    }
+}
+
 extension View {
     func slashOverlay(color: Color) -> some View {
         modifier(SlashOverlay(color: color))
+    }
+
+    func animatedSlashOverlay(color: Color, isVisible: Bool) -> some View {
+        modifier(AnimatedSlashOverlay(color: color, isVisible: isVisible))
     }
 
     /// Conditionally apply a transformation to a view

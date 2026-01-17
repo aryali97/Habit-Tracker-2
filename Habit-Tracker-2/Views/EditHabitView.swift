@@ -134,9 +134,7 @@ struct EditHabitView: View {
                 .frame(width: 100, height: 100)
                 .background(Color(hex: color).opacity(0.2))
                 .clipShape(Circle())
-                .if(editMode == .quit) { view in
-                    view.slashOverlay(color: Color(hex: color))
-                }
+                .animatedSlashOverlay(color: Color(hex: color), isVisible: editMode == .quit)
         }
         .onTapGesture {
             showIconPicker = true
