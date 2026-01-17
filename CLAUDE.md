@@ -27,19 +27,36 @@ iOS 26+ habit tracking app with streak visualization and customizable goals.
 
 ## Product Overview
 
+### Habit Types
+The app supports two types of habits:
+
+**Build Habits**: Behaviors you want to do more of
+- Examples: Exercise, read, meditate, drink water
+- Track completions toward a daily goal
+- Success = reaching your target
+
+**Quit Habits**: Behaviors you want to reduce or eliminate
+- Examples: Quit smoking, reduce social media, stop snacking, limit caffeine
+- Track violations against a daily limit
+- Success = staying under your limit
+- Icon displays with a slash overlay to visually indicate "stop" behavior
+
 ### Habit Configuration
 Each habit supports:
+- **Type**: Build or Quit (see Habit Types above)
 - **Icon**: SF Symbols selection
 - **Name**: Required text
 - **Description**: Optional text
 - **Color**: Selected from a preset palette
-- **Completions per day**: 1 for once-daily habits, or higher for multi-completion habits
-- **Goal**: Configurable target with:
-  - **Period**: Day / Week / Month
+- **Daily Goal/Limit**:
+  - Build habits: Completions required per day (minimum 1)
+  - Quit habits: Maximum violations allowed per day (can be 0 for complete abstinence)
+- **Larger Goal/Limit**: Optional longer-term target with:
+  - **Period**: Week / Month (or None)
   - **Value**: Target number
-  - **Type**: Day basis or Value basis
-    - Day basis: "Complete on X days this period"
-    - Value basis: "Reach X total completions this period"
+  - **Type**: Day basis or Value basis (only shown when daily goal/limit > 1)
+    - Day basis: "Complete/stay within limit on X days this period"
+    - Value basis: "Reach X total completions/keep violations under X this period"
 
 ### Main View (Habit List)
 - Scrollable list of habit cards
@@ -51,27 +68,39 @@ Each habit supports:
   - Grid visualization below
 
 ### Completion Button
-**Once per day habits (completionsPerDay = 1)**:
+**Build Habits - Once per day (daily goal = 1)**:
 - Checkmark button
 - Tap to toggle complete/incomplete for today
 - Filled with habit color when complete, outline when incomplete
 
-**Multi-completion habits (completionsPerDay > 1)**:
+**Build Habits - Multi-completion (daily goal > 1)**:
 - Plus (+) icon in center
 - Circular arc progress indicator around the +
 - Arc segments show progress (count / goal)
 - Tap to increment by 1
 - Long-press to open picker for manual value entry
 
+**Quit Habits**:
+- Same interaction patterns as build habits
+- Tracks violations instead of completions
+- For quit habits with daily limit = 0, any tap logs a violation
+
 ### Grid Visualization
 - 7 rows for each day of the week.
 - 52 columns (1 year of weeks)
 - Horizontally scrollable left/right to show previous/later weeks
 - Initially scrolled to show current week on the right edge
-- Day cell color intensity based on completion:
+- Day cell color intensity differs by habit type:
+
+**Build Habits** (more color = better):
   - 0 completions: very faint/dark base color
   - Partial completion: medium intensity
-  - Full completion (count >= completionsPerDay): full color intensity
+  - Full completion (count >= daily goal): full color intensity
+
+**Quit Habits** (less color = better):
+  - 0 violations: very faint/dark base color (success!)
+  - Some violations but under limit: medium intensity
+  - At or over limit: full color intensity (indicates a bad day)
 
 ### Goal Indicators
 Goal indicators summarize progress without outlines:
@@ -87,15 +116,16 @@ Goal indicators summarize progress without outlines:
 
 ### Edit Habit Sheet
 Presented as a sheet when adding or editing a habit:
+- Build/Quit toggle (segmented control at top)
 - Icon picker button (opens SF Symbols picker)
 - Name text field (required)
 - Description text field (optional)
 - Color picker (grid of preset colors)
-- Completions per day (stepper, minimum 1)
-- Goal section:
-  - Goal value (stepper)
-  - Goal period (picker: Day / Week / Month)
-  - Goal type (segmented control: Day Basis / Value Basis)
+- Daily Goal/Limit stepper (minimum 0 for quit, 1 for build)
+- Larger Goal/Limit section:
+  - Period picker (None / Weekly / Monthly)
+  - Value stepper (appears when period is not None)
+  - Basis selection cards (Day Basis / Value Basis) - only shown when daily goal/limit > 1
 - Save button
 - Cancel/close button
 
