@@ -17,6 +17,35 @@ struct HabitCardView: View {
         Color(hex: habit.color)
     }
 
+    private var completionsByDate: [Date: Int] {
+        var dict: [Date: Int] = [:]
+        let calendar = Calendar.current
+        for completion in habit.completions {
+            let dateKey = calendar.startOfDay(for: completion.date)
+            dict[dateKey] = completion.count
+        }
+        return dict
+    }
+
+    private var subtitle: HabitSubtitle {
+        let calculator = HabitSubtitleCalculator(
+            habit: habit,
+            completionsByDate: completionsByDate
+        )
+        return calculator.calculate()
+    }
+
+    private var secondaryColor: Color {
+        switch subtitle.secondaryStyle {
+        case .normal:
+            return Color(UIColor.systemGray2)
+        case .violation:
+            return .red
+        case .streak:
+            return habitColor
+        }
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             // Header row: icon, name, completion button
@@ -39,9 +68,29 @@ struct HabitCardView: View {
                     }
                     .buttonStyle(PressScaleButtonStyle())
 
-                    Text(habit.name)
-                        .font(.system(size: 17, weight: .medium))
-                        .foregroundStyle(.white)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(habit.name)
+                            .font(.system(size: 17, weight: .medium))
+                            .foregroundStyle(.white)
+
+                        HStack(spacing: 0) {
+                            Text(subtitle.goalText)
+                                .font(.caption)
+                                .foregroundStyle(Color(UIColor.systemGray2))
+
+                            if let secondaryText = subtitle.secondaryText {
+                                Text(" \u{2022} ")
+                                    .font(.caption)
+                                    .foregroundStyle(Color(UIColor.systemGray2))
+
+                                Text(secondaryText)
+                                    .font(.caption)
+                                    .foregroundStyle(secondaryColor)
+                                    .contentTransition(.numericText())
+                                    .animation(.snappy, value: secondaryText)
+                            }
+                        }
+                    }
 
                     Spacer()
                 }

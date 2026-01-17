@@ -22,9 +22,10 @@ final class GoalIndicatorEvaluatorTests: XCTestCase {
     }
 
     private func evaluator(
-        habitCreatedAt: Date,
+        habitStartDate: Date,
         completionsByDate: [Date: Int],
         completionsPerDay: Int,
+        habitType: HabitType = .build,
         streakGoalPeriod: StreakPeriod,
         streakGoalValue: Int,
         streakGoalType: StreakGoalType,
@@ -32,9 +33,10 @@ final class GoalIndicatorEvaluatorTests: XCTestCase {
         today: Date
     ) -> GoalIndicatorEvaluator {
         GoalIndicatorEvaluator(
-            habitCreatedAt: habitCreatedAt,
+            habitStartDate: habitStartDate,
             completionsByDate: completionsByDate,
             completionsPerDay: completionsPerDay,
+            habitType: habitType,
             streakGoalPeriod: streakGoalPeriod,
             streakGoalValue: streakGoalValue,
             streakGoalType: streakGoalType,
@@ -56,7 +58,7 @@ final class GoalIndicatorEvaluatorTests: XCTestCase {
         }
 
         let evaluator = evaluator(
-            habitCreatedAt: weekStart,
+            habitStartDate: weekStart,
             completionsByDate: completions,
             completionsPerDay: 1,
             streakGoalPeriod: .week,
@@ -77,7 +79,7 @@ final class GoalIndicatorEvaluatorTests: XCTestCase {
         completions[calendar.startOfDay(for: weekStart)] = 1
 
         let evaluator = evaluator(
-            habitCreatedAt: weekStart,
+            habitStartDate: weekStart,
             completionsByDate: completions,
             completionsPerDay: 1,
             streakGoalPeriod: .day,
@@ -102,7 +104,7 @@ final class GoalIndicatorEvaluatorTests: XCTestCase {
         }
 
         let evaluator = evaluator(
-            habitCreatedAt: monthStart,
+            habitStartDate: monthStart,
             completionsByDate: completions,
             completionsPerDay: 1,
             streakGoalPeriod: .day,
@@ -138,7 +140,7 @@ final class GoalIndicatorEvaluatorTests: XCTestCase {
         }
 
         let evaluator = evaluator(
-            habitCreatedAt: monthStart,
+            habitStartDate: monthStart,
             completionsByDate: completions,
             completionsPerDay: 1,
             streakGoalPeriod: .week,
@@ -179,7 +181,7 @@ final class GoalIndicatorEvaluatorTests: XCTestCase {
         }
 
         let evaluator = evaluator(
-            habitCreatedAt: monthStart,
+            habitStartDate: monthStart,
             completionsByDate: completions,
             completionsPerDay: 1,
             streakGoalPeriod: .week,
@@ -203,7 +205,7 @@ final class GoalIndicatorEvaluatorTests: XCTestCase {
         }
 
         let evaluator = evaluator(
-            habitCreatedAt: monthStart,
+            habitStartDate: monthStart,
             completionsByDate: completions,
             completionsPerDay: 1,
             streakGoalPeriod: .month,
