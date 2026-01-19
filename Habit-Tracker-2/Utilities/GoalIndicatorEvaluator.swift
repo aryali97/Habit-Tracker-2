@@ -95,16 +95,16 @@ struct GoalIndicatorEvaluator {
 
     private func weekAllDaysCompleted(weekIndex: Int) -> Bool {
         let weekStart = calendar.date(byAdding: .day, value: weekIndex * daysInWeek, to: gridStartDate)!
-        var hasActiveDay = false
+
+        // Partial weeks (habit started mid-week) don't count
+        if habitStartDate > weekStart {
+            return false
+        }
 
         for offset in 0..<daysInWeek {
             guard let date = calendar.date(byAdding: .day, value: offset, to: weekStart) else {
                 continue
             }
-            if date < habitStartDate {
-                continue
-            }
-            hasActiveDay = true
             let count = completionsByDate[date] ?? 0
 
             let dayMeetsGoal = habitType == .quit
@@ -116,7 +116,7 @@ struct GoalIndicatorEvaluator {
             }
         }
 
-        return hasActiveDay
+        return true
     }
 
     private func monthMeetsGoal(monthStart: Date) -> Bool {
@@ -134,19 +134,20 @@ struct GoalIndicatorEvaluator {
         guard streakGoalPeriod == .day else {
             return false
         }
+
+        // Partial months (habit started mid-month) don't count
+        if habitStartDate > monthStart {
+            return false
+        }
+
         guard let monthRange = calendar.range(of: .day, in: .month, for: monthStart) else {
             return false
         }
-        var hasActiveDay = false
 
         for offset in 0..<monthRange.count {
             guard let date = calendar.date(byAdding: .day, value: offset, to: monthStart) else {
                 continue
             }
-            if date < habitStartDate {
-                continue
-            }
-            hasActiveDay = true
             let count = completionsByDate[date] ?? 0
 
             let dayMeetsGoal = habitType == .quit
@@ -158,7 +159,7 @@ struct GoalIndicatorEvaluator {
             }
         }
 
-        return hasActiveDay
+        return true
     }
 
     private func monthAllWeeksMeetGoal(monthStart: Date) -> Bool {

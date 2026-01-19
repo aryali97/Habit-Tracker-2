@@ -11,7 +11,6 @@ struct HabitCardView: View {
     var onEdit: (() -> Void)? = nil
     var onDelete: (() -> Void)? = nil
     var onReorder: (() -> Void)? = nil
-    @GestureState private var isHeaderPressed = false
 
     private var habitColor: Color {
         Color(hex: habit.color)
@@ -95,14 +94,6 @@ struct HabitCardView: View {
                     Spacer()
                 }
                 .contentShape(Rectangle())
-                .scaleEffect(isHeaderPressed ? 0.98 : 1)
-                .animation(.easeOut(duration: 0.12), value: isHeaderPressed)
-                .simultaneousGesture(
-                    DragGesture(minimumDistance: 0)
-                        .updating($isHeaderPressed) { _, state, _ in
-                            state = true
-                        }
-                )
                 .contextMenu {
                     if let onReorder = onReorder {
                         Button {

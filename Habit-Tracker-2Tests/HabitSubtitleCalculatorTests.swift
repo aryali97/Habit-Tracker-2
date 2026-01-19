@@ -241,6 +241,27 @@ final class HabitSubtitleCalculatorTests: XCTestCase {
         XCTAssertNil(subtitle.secondaryText)
     }
 
+    func testStreak_dailyGoalShowsDayStreakNotWeekStreak() {
+        // Habit with no larger goal (daily only) should show day streak, not week streak
+        // even if every day in the current week is complete
+        let habit = makeHabit(completionsPerDay: 1, habitStartDate: date(2026, 1, 1))
+        let today = date(2026, 1, 17)  // Saturday (end of week starting Jan 11)
+
+        // Complete every day of the current week (Sun Jan 11 - Sat Jan 17)
+        var completions: [Date: Int] = [:]
+        for day in 11...17 {
+            completions[date(2026, 1, day)] = 1
+        }
+
+        let calc = calculator(habit: habit, completionsByDate: completions, today: today)
+        let subtitle = calc.calculate()
+
+        // Should show day streak, NOT week streak
+        XCTAssertEqual(subtitle.secondaryText, "7 day streak")
+        XCTAssertTrue(subtitle.secondaryText?.contains("day") ?? false)
+        XCTAssertFalse(subtitle.secondaryText?.contains("week") ?? true)
+    }
+
     func testStreak_weeklyConsecutive() {
         let habit = makeHabit(
             completionsPerDay: 1,
